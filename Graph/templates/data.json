@@ -1,0 +1,906 @@
+{
+    "nodes": [
+      {
+        "id": "dbo.SQL_STORED_PROCEDURE_1mb805",
+        "schema_name": "dbo",
+        "object_name": "SQL_STORED_PROCEDURE_fa4i2",
+        "object_type": "SQL_STORED_PROCEDURE",
+        "level": 2,
+        "cluster": 2,
+        "in_degree": 0,
+        "out_degree": 0
+      },
+      {
+        "id": "Sales.USER_TABLE_92qpbk",
+        "schema_name": "Sales",
+        "object_name": "USER_TABLE_4g9gj",
+        "object_type": "USER_TABLE",
+        "level": 1,
+        "cluster": 1,
+        "in_degree": 1,
+        "out_degree": 0
+      },
+      {
+        "id": "dbo.SQL_STORED_PROCEDURE_pfxu74",
+        "schema_name": "dbo",
+        "object_name": "SQL_STORED_PROCEDURE_qi1ss",
+        "object_type": "SQL_STORED_PROCEDURE",
+        "level": 2,
+        "cluster": 0,
+        "in_degree": 1,
+        "out_degree": 1
+      },
+      {
+        "id": "Finance.VIEW_m6huom",
+        "schema_name": "Finance",
+        "object_name": "VIEW_jtub6",
+        "object_type": "VIEW",
+        "level": 3,
+        "cluster": 2,
+        "in_degree": 0,
+        "out_degree": 0
+      },
+      {
+        "id": "Inventory.FUNCTION_386tb",
+        "schema_name": "Inventory",
+        "object_name": "FUNCTION_1xhws",
+        "object_type": "FUNCTION",
+        "level": 0,
+        "cluster": 1,
+        "in_degree": 0,
+        "out_degree": 1
+      },
+      {
+        "id": "Sales.VIEW_wyzimj",
+        "schema_name": "Sales",
+        "object_name": "VIEW_zdccz",
+        "object_type": "VIEW",
+        "level": 0,
+        "cluster": 2,
+        "in_degree": 2,
+        "out_degree": 0
+      },
+      {
+        "id": "dbo.FUNCTION_lfl9ab",
+        "schema_name": "dbo",
+        "object_name": "FUNCTION_7v9ls",
+        "object_type": "FUNCTION",
+        "level": 2,
+        "cluster": 2,
+        "in_degree": 0,
+        "out_degree": 1
+      },
+      {
+        "id": "HumanResources.VIEW_ln3lif",
+        "schema_name": "HumanResources",
+        "object_name": "VIEW_f1igb",
+        "object_type": "VIEW",
+        "level": 3,
+        "cluster": 2,
+        "in_degree": 1,
+        "out_degree": 2
+      },
+      {
+        "id": "Inventory.SQL_STORED_PROCEDURE_okart",
+        "schema_name": "Inventory",
+        "object_name": "SQL_STORED_PROCEDURE_e63yo",
+        "object_type": "SQL_STORED_PROCEDURE",
+        "level": 3,
+        "cluster": 1,
+        "in_degree": 1,
+        "out_degree": 2
+      },
+      {
+        "id": "Finance.USER_TABLE_1ptyde",
+        "schema_name": "Finance",
+        "object_name": "USER_TABLE_ihp2y",
+        "object_type": "USER_TABLE",
+        "level": 1,
+        "cluster": 1,
+        "in_degree": 0,
+        "out_degree": 0
+      },
+      {
+        "id": "Sales.SQL_STORED_PROCEDURE_xpghqn",
+        "schema_name": "Sales",
+        "object_name": "SQL_STORED_PROCEDURE_kik4z",
+        "object_type": "SQL_STORED_PROCEDURE",
+        "level": 3,
+        "cluster": 0,
+        "in_degree": 2,
+        "out_degree": 2
+      },
+      {
+        "id": "HumanResources.FUNCTION_2yy8e",
+        "schema_name": "HumanResources",
+        "object_name": "FUNCTION_fli5p",
+        "object_type": "FUNCTION",
+        "level": 1,
+        "cluster": 2,
+        "in_degree": 2,
+        "out_degree": 2
+      },
+      {
+        "id": "Sales.USER_TABLE_mz4dxu",
+        "schema_name": "Sales",
+        "object_name": "USER_TABLE_yyc1f",
+        "object_type": "USER_TABLE",
+        "level": 2,
+        "cluster": 0,
+        "in_degree": 0,
+        "out_degree": 1
+      },
+      {
+        "id": "Finance.FUNCTION_kotuwv",
+        "schema_name": "Finance",
+        "object_name": "FUNCTION_0pg2o",
+        "object_type": "FUNCTION",
+        "level": 1,
+        "cluster": 1,
+        "in_degree": 1,
+        "out_degree": 1
+      },
+      {
+        "id": "Finance.USER_TABLE_9iqh3",
+        "schema_name": "Finance",
+        "object_name": "USER_TABLE_yz7hq",
+        "object_type": "USER_TABLE",
+        "level": 2,
+        "cluster": 1,
+        "in_degree": 1,
+        "out_degree": 1
+      },
+      {
+        "id": "dbo.USER_TABLE_xebt1c",
+        "schema_name": "dbo",
+        "object_name": "USER_TABLE_rokay",
+        "object_type": "USER_TABLE",
+        "level": 1,
+        "cluster": 0,
+        "in_degree": 2,
+        "out_degree": 2
+      },
+      {
+        "id": "dbo.FUNCTION_2j0y8o",
+        "schema_name": "dbo",
+        "object_name": "FUNCTION_tak0q",
+        "object_type": "FUNCTION",
+        "level": 3,
+        "cluster": 2,
+        "in_degree": 2,
+        "out_degree": 1
+      },
+      {
+        "id": "Sales.VIEW_sqd43c",
+        "schema_name": "Sales",
+        "object_name": "VIEW_dlivx",
+        "object_type": "VIEW",
+        "level": 2,
+        "cluster": 1,
+        "in_degree": 2,
+        "out_degree": 2
+      },
+      {
+        "id": "Inventory.FUNCTION_wapfrk",
+        "schema_name": "Inventory",
+        "object_name": "FUNCTION_ms6ny",
+        "object_type": "FUNCTION",
+        "level": 1,
+        "cluster": 0,
+        "in_degree": 2,
+        "out_degree": 2
+      },
+      {
+        "id": "Sales.USER_TABLE_0r09d",
+        "schema_name": "Sales",
+        "object_name": "USER_TABLE_1818m",
+        "object_type": "USER_TABLE",
+        "level": 3,
+        "cluster": 2,
+        "in_degree": 2,
+        "out_degree": 1
+      },
+      {
+        "id": "Inventory.USER_TABLE_9m7dj7",
+        "schema_name": "Inventory",
+        "object_name": "USER_TABLE_hg4xy",
+        "object_type": "USER_TABLE",
+        "level": 1,
+        "cluster": 0,
+        "in_degree": 0,
+        "out_degree": 2
+      },
+      {
+        "id": "Sales.SQL_STORED_PROCEDURE_12gc0c",
+        "schema_name": "Sales",
+        "object_name": "SQL_STORED_PROCEDURE_w9ysj",
+        "object_type": "SQL_STORED_PROCEDURE",
+        "level": 0,
+        "cluster": 0,
+        "in_degree": 0,
+        "out_degree": 1
+      },
+      {
+        "id": "dbo.USER_TABLE_ydqvdi",
+        "schema_name": "dbo",
+        "object_name": "USER_TABLE_8a5la",
+        "object_type": "USER_TABLE",
+        "level": 1,
+        "cluster": 2,
+        "in_degree": 0,
+        "out_degree": 2
+      },
+      {
+        "id": "dbo.SQL_STORED_PROCEDURE_9kkw3m",
+        "schema_name": "dbo",
+        "object_name": "SQL_STORED_PROCEDURE_pythu",
+        "object_type": "SQL_STORED_PROCEDURE",
+        "level": 3,
+        "cluster": 1,
+        "in_degree": 1,
+        "out_degree": 0
+      },
+      {
+        "id": "HumanResources.VIEW_h7fflj",
+        "schema_name": "HumanResources",
+        "object_name": "VIEW_6e5ne",
+        "object_type": "VIEW",
+        "level": 3,
+        "cluster": 0,
+        "in_degree": 0,
+        "out_degree": 0
+      },
+      {
+        "id": "Inventory.VIEW_0rs8x",
+        "schema_name": "Inventory",
+        "object_name": "VIEW_myhv3",
+        "object_type": "VIEW",
+        "level": 3,
+        "cluster": 0,
+        "in_degree": 2,
+        "out_degree": 0
+      },
+      {
+        "id": "Inventory.VIEW_rp4h17",
+        "schema_name": "Inventory",
+        "object_name": "VIEW_b8c6w",
+        "object_type": "VIEW",
+        "level": 0,
+        "cluster": 2,
+        "in_degree": 2,
+        "out_degree": 0
+      },
+      {
+        "id": "Inventory.FUNCTION_fp402a",
+        "schema_name": "Inventory",
+        "object_name": "FUNCTION_fowik",
+        "object_type": "FUNCTION",
+        "level": 2,
+        "cluster": 2,
+        "in_degree": 0,
+        "out_degree": 2
+      },
+      {
+        "id": "Sales.FUNCTION_rwhrkj",
+        "schema_name": "Sales",
+        "object_name": "FUNCTION_iew1p",
+        "object_type": "FUNCTION",
+        "level": 1,
+        "cluster": 0,
+        "in_degree": 0,
+        "out_degree": 2
+      },
+      {
+        "id": "Inventory.SQL_STORED_PROCEDURE_y5mv8v",
+        "schema_name": "Inventory",
+        "object_name": "SQL_STORED_PROCEDURE_jqtmh",
+        "object_type": "SQL_STORED_PROCEDURE",
+        "level": 2,
+        "cluster": 0,
+        "in_degree": 0,
+        "out_degree": 1
+      },
+      {
+        "id": "Inventory.FUNCTION_un5auh",
+        "schema_name": "Inventory",
+        "object_name": "FUNCTION_ujtsm",
+        "object_type": "FUNCTION",
+        "level": 0,
+        "cluster": 0,
+        "in_degree": 2,
+        "out_degree": 0
+      },
+      {
+        "id": "Sales.USER_TABLE_7rpa17",
+        "schema_name": "Sales",
+        "object_name": "USER_TABLE_7a0wy",
+        "object_type": "USER_TABLE",
+        "level": 2,
+        "cluster": 2,
+        "in_degree": 2,
+        "out_degree": 1
+      },
+      {
+        "id": "Inventory.SQL_STORED_PROCEDURE_smfunl",
+        "schema_name": "Inventory",
+        "object_name": "SQL_STORED_PROCEDURE_5spwj",
+        "object_type": "SQL_STORED_PROCEDURE",
+        "level": 0,
+        "cluster": 1,
+        "in_degree": 1,
+        "out_degree": 1
+      },
+      {
+        "id": "Sales.USER_TABLE_0s28jb",
+        "schema_name": "Sales",
+        "object_name": "USER_TABLE_ebag7",
+        "object_type": "USER_TABLE",
+        "level": 2,
+        "cluster": 2,
+        "in_degree": 1,
+        "out_degree": 1
+      },
+      {
+        "id": "Inventory.VIEW_nf1m1w",
+        "schema_name": "Inventory",
+        "object_name": "VIEW_v4anz",
+        "object_type": "VIEW",
+        "level": 2,
+        "cluster": 1,
+        "in_degree": 0,
+        "out_degree": 2
+      },
+      {
+        "id": "Finance.USER_TABLE_9kc9tn",
+        "schema_name": "Finance",
+        "object_name": "USER_TABLE_ykpd3",
+        "object_type": "USER_TABLE",
+        "level": 3,
+        "cluster": 2,
+        "in_degree": 1,
+        "out_degree": 1
+      },
+      {
+        "id": "HumanResources.SQL_STORED_PROCEDURE_tzudn",
+        "schema_name": "HumanResources",
+        "object_name": "SQL_STORED_PROCEDURE_b6wm2",
+        "object_type": "SQL_STORED_PROCEDURE",
+        "level": 1,
+        "cluster": 0,
+        "in_degree": 0,
+        "out_degree": 0
+      },
+      {
+        "id": "Finance.SQL_STORED_PROCEDURE_grwof",
+        "schema_name": "Finance",
+        "object_name": "SQL_STORED_PROCEDURE_t4sfg",
+        "object_type": "SQL_STORED_PROCEDURE",
+        "level": 1,
+        "cluster": 0,
+        "in_degree": 1,
+        "out_degree": 2
+      },
+      {
+        "id": "Sales.VIEW_0qtb7w",
+        "schema_name": "Sales",
+        "object_name": "VIEW_wt196",
+        "object_type": "VIEW",
+        "level": 3,
+        "cluster": 0,
+        "in_degree": 1,
+        "out_degree": 0
+      },
+      {
+        "id": "Finance.VIEW_btakw",
+        "schema_name": "Finance",
+        "object_name": "VIEW_6acs9",
+        "object_type": "VIEW",
+        "level": 0,
+        "cluster": 0,
+        "in_degree": 2,
+        "out_degree": 2
+      },
+      {
+        "id": "Inventory.USER_TABLE_uy2j7k",
+        "schema_name": "Inventory",
+        "object_name": "USER_TABLE_84w99",
+        "object_type": "USER_TABLE",
+        "level": 3,
+        "cluster": 1,
+        "in_degree": 1,
+        "out_degree": 2
+      },
+      {
+        "id": "Inventory.USER_TABLE_gngn5o",
+        "schema_name": "Inventory",
+        "object_name": "USER_TABLE_rkvwm",
+        "object_type": "USER_TABLE",
+        "level": 0,
+        "cluster": 0,
+        "in_degree": 2,
+        "out_degree": 2
+      },
+      {
+        "id": "HumanResources.SQL_STORED_PROCEDURE_vdhm9",
+        "schema_name": "HumanResources",
+        "object_name": "SQL_STORED_PROCEDURE_m7irq",
+        "object_type": "SQL_STORED_PROCEDURE",
+        "level": 1,
+        "cluster": 0,
+        "in_degree": 2,
+        "out_degree": 1
+      },
+      {
+        "id": "HumanResources.VIEW_gnmqvk",
+        "schema_name": "HumanResources",
+        "object_name": "VIEW_xdwe3",
+        "object_type": "VIEW",
+        "level": 2,
+        "cluster": 1,
+        "in_degree": 0,
+        "out_degree": 0
+      },
+      {
+        "id": "HumanResources.SQL_STORED_PROCEDURE_hra849",
+        "schema_name": "HumanResources",
+        "object_name": "SQL_STORED_PROCEDURE_udz0u",
+        "object_type": "SQL_STORED_PROCEDURE",
+        "level": 0,
+        "cluster": 1,
+        "in_degree": 0,
+        "out_degree": 0
+      },
+      {
+        "id": "Inventory.FUNCTION_ysw5uc",
+        "schema_name": "Inventory",
+        "object_name": "FUNCTION_cwzmh",
+        "object_type": "FUNCTION",
+        "level": 2,
+        "cluster": 2,
+        "in_degree": 0,
+        "out_degree": 2
+      },
+      {
+        "id": "Inventory.VIEW_tsjbu",
+        "schema_name": "Inventory",
+        "object_name": "VIEW_gzkoc",
+        "object_type": "VIEW",
+        "level": 0,
+        "cluster": 1,
+        "in_degree": 1,
+        "out_degree": 1
+      },
+      {
+        "id": "HumanResources.USER_TABLE_o30oh9",
+        "schema_name": "HumanResources",
+        "object_name": "USER_TABLE_y0ytz",
+        "object_type": "USER_TABLE",
+        "level": 0,
+        "cluster": 2,
+        "in_degree": 0,
+        "out_degree": 1
+      },
+      {
+        "id": "Sales.FUNCTION_v3i7ym",
+        "schema_name": "Sales",
+        "object_name": "FUNCTION_7fl07",
+        "object_type": "FUNCTION",
+        "level": 2,
+        "cluster": 1,
+        "in_degree": 2,
+        "out_degree": 0
+      },
+      {
+        "id": "HumanResources.USER_TABLE_8hmtw",
+        "schema_name": "HumanResources",
+        "object_name": "USER_TABLE_m0z9z",
+        "object_type": "USER_TABLE",
+        "level": 2,
+        "cluster": 0,
+        "in_degree": 1,
+        "out_degree": 0
+      }
+    ],
+    "edges": [
+      {
+        "source": "HumanResources.VIEW_h7fflj",
+        "target": "dbo.USER_TABLE_ydqvdi"
+      },
+      {
+        "source": "HumanResources.VIEW_h7fflj",
+        "target": "Inventory.FUNCTION_wapfrk"
+      },
+      {
+        "source": "Sales.FUNCTION_v3i7ym",
+        "target": "Finance.FUNCTION_kotuwv"
+      },
+      {
+        "source": "Inventory.USER_TABLE_uy2j7k",
+        "target": "Inventory.VIEW_rp4h17"
+      },
+      {
+        "source": "Inventory.VIEW_nf1m1w",
+        "target": "Inventory.USER_TABLE_uy2j7k"
+      },
+      {
+        "source": "Inventory.USER_TABLE_uy2j7k",
+        "target": "Inventory.VIEW_nf1m1w"
+      },
+      {
+        "source": "dbo.FUNCTION_2j0y8o",
+        "target": "Finance.SQL_STORED_PROCEDURE_grwof"
+      },
+      {
+        "source": "Inventory.SQL_STORED_PROCEDURE_okart",
+        "target": "dbo.FUNCTION_lfl9ab"
+      },
+      {
+        "source": "HumanResources.USER_TABLE_o30oh9",
+        "target": "dbo.FUNCTION_lfl9ab"
+      },
+      {
+        "source": "Sales.USER_TABLE_7rpa17",
+        "target": "dbo.SQL_STORED_PROCEDURE_9kkw3m"
+      },
+      {
+        "source": "Inventory.FUNCTION_un5auh",
+        "target": "Inventory.FUNCTION_wapfrk"
+      },
+      {
+        "source": "Inventory.FUNCTION_wapfrk",
+        "target": "Sales.VIEW_0qtb7w"
+      },
+      {
+        "source": "Inventory.VIEW_rp4h17",
+        "target": "Inventory.SQL_STORED_PROCEDURE_okart"
+      },
+      {
+        "source": "Inventory.VIEW_tsjbu",
+        "target": "HumanResources.FUNCTION_2yy8e"
+      },
+      {
+        "source": "HumanResources.USER_TABLE_8hmtw",
+        "target": "Sales.VIEW_sqd43c"
+      },
+      {
+        "source": "dbo.SQL_STORED_PROCEDURE_pfxu74",
+        "target": "dbo.USER_TABLE_ydqvdi"
+      },
+      {
+        "source": "Sales.VIEW_0qtb7w",
+        "target": "Finance.SQL_STORED_PROCEDURE_grwof"
+      },
+      {
+        "source": "dbo.USER_TABLE_xebt1c",
+        "target": "Inventory.USER_TABLE_uy2j7k"
+      },
+      {
+        "source": "Sales.SQL_STORED_PROCEDURE_12gc0c",
+        "target": "HumanResources.VIEW_h7fflj"
+      },
+      {
+        "source": "dbo.SQL_STORED_PROCEDURE_pfxu74",
+        "target": "HumanResources.FUNCTION_2yy8e"
+      },
+      {
+        "source": "HumanResources.SQL_STORED_PROCEDURE_hra849",
+        "target": "Inventory.FUNCTION_ysw5uc"
+      },
+      {
+        "source": "HumanResources.USER_TABLE_o30oh9",
+        "target": "Inventory.SQL_STORED_PROCEDURE_y5mv8v"
+      },
+      {
+        "source": "HumanResources.USER_TABLE_8hmtw",
+        "target": "HumanResources.VIEW_gnmqvk"
+      },
+      {
+        "source": "HumanResources.VIEW_h7fflj",
+        "target": "HumanResources.SQL_STORED_PROCEDURE_vdhm9"
+      },
+      {
+        "source": "Sales.USER_TABLE_0r09d",
+        "target": "dbo.FUNCTION_2j0y8o"
+      },
+      {
+        "source": "HumanResources.SQL_STORED_PROCEDURE_vdhm9",
+        "target": "Sales.USER_TABLE_7rpa17"
+      },
+      {
+        "source": "Inventory.FUNCTION_fp402a",
+        "target": "HumanResources.USER_TABLE_8hmtw"
+      },
+      {
+        "source": "dbo.SQL_STORED_PROCEDURE_1mb805",
+        "target": "Finance.VIEW_btakw"
+      },
+      {
+        "source": "Sales.FUNCTION_v3i7ym",
+        "target": "Inventory.SQL_STORED_PROCEDURE_okart"
+      },
+      {
+        "source": "HumanResources.VIEW_gnmqvk",
+        "target": "Sales.FUNCTION_v3i7ym"
+      },
+      {
+        "source": "Sales.SQL_STORED_PROCEDURE_12gc0c",
+        "target": "HumanResources.SQL_STORED_PROCEDURE_vdhm9"
+      },
+      {
+        "source": "Finance.USER_TABLE_9iqh3",
+        "target": "HumanResources.VIEW_ln3lif"
+      },
+      {
+        "source": "Inventory.FUNCTION_fp402a",
+        "target": "dbo.SQL_STORED_PROCEDURE_1mb805"
+      },
+      {
+        "source": "Sales.USER_TABLE_0s28jb",
+        "target": "Inventory.FUNCTION_un5auh"
+      },
+      {
+        "source": "Inventory.SQL_STORED_PROCEDURE_smfunl",
+        "target": "HumanResources.VIEW_h7fflj"
+      },
+      {
+        "source": "Sales.USER_TABLE_0s28jb",
+        "target": "Inventory.FUNCTION_386tb"
+      },
+      {
+        "source": "Finance.SQL_STORED_PROCEDURE_grwof",
+        "target": "Inventory.SQL_STORED_PROCEDURE_y5mv8v"
+      },
+      {
+        "source": "Sales.VIEW_0qtb7w",
+        "target": "Inventory.VIEW_rp4h17"
+      },
+      {
+        "source": "dbo.SQL_STORED_PROCEDURE_1mb805",
+        "target": "Inventory.VIEW_0rs8x"
+      },
+      {
+        "source": "Inventory.VIEW_rp4h17",
+        "target": "Sales.USER_TABLE_92qpbk"
+      },
+      {
+        "source": "Finance.VIEW_m6huom",
+        "target": "Finance.USER_TABLE_1ptyde"
+      },
+      {
+        "source": "Inventory.USER_TABLE_uy2j7k",
+        "target": "Inventory.VIEW_tsjbu"
+      },
+      {
+        "source": "dbo.SQL_STORED_PROCEDURE_9kkw3m",
+        "target": "Inventory.USER_TABLE_uy2j7k"
+      },
+      {
+        "source": "Inventory.VIEW_tsjbu",
+        "target": "Inventory.SQL_STORED_PROCEDURE_y5mv8v"
+      },
+      {
+        "source": "dbo.FUNCTION_lfl9ab",
+        "target": "Finance.VIEW_m6huom"
+      },
+      {
+        "source": "Sales.USER_TABLE_mz4dxu",
+        "target": "Sales.SQL_STORED_PROCEDURE_12gc0c"
+      },
+      {
+        "source": "Inventory.VIEW_rp4h17",
+        "target": "dbo.USER_TABLE_ydqvdi"
+      },
+      {
+        "source": "Inventory.VIEW_nf1m1w",
+        "target": "Sales.SQL_STORED_PROCEDURE_12gc0c"
+      },
+      {
+        "source": "Inventory.VIEW_0rs8x",
+        "target": "Inventory.FUNCTION_wapfrk"
+      },
+      {
+        "source": "Sales.USER_TABLE_mz4dxu",
+        "target": "Sales.VIEW_0qtb7w"
+      },
+      {
+        "source": "Sales.SQL_STORED_PROCEDURE_xpghqn",
+        "target": "Sales.FUNCTION_rwhrkj"
+      },
+      {
+        "source": "HumanResources.USER_TABLE_8hmtw",
+        "target": "Sales.USER_TABLE_0s28jb"
+      },
+      {
+        "source": "HumanResources.SQL_STORED_PROCEDURE_tzudn",
+        "target": "Inventory.VIEW_nf1m1w"
+      },
+      {
+        "source": "Sales.VIEW_wyzimj",
+        "target": "Sales.USER_TABLE_0s28jb"
+      },
+      {
+        "source": "Sales.USER_TABLE_92qpbk",
+        "target": "Inventory.VIEW_tsjbu"
+      },
+      {
+        "source": "Inventory.USER_TABLE_9m7dj7",
+        "target": "Sales.USER_TABLE_92qpbk"
+      },
+      {
+        "source": "Inventory.FUNCTION_wapfrk",
+        "target": "dbo.USER_TABLE_xebt1c"
+      },
+      {
+        "source": "dbo.SQL_STORED_PROCEDURE_pfxu74",
+        "target": "Sales.FUNCTION_v3i7ym"
+      },
+      {
+        "source": "Inventory.FUNCTION_fp402a",
+        "target": "Finance.USER_TABLE_9kc9tn"
+      },
+      {
+        "source": "Sales.USER_TABLE_92qpbk",
+        "target": "Inventory.SQL_STORED_PROCEDURE_smfunl"
+      },
+      {
+        "source": "Inventory.VIEW_nf1m1w",
+        "target": "Sales.USER_TABLE_0s28jb"
+      },
+      {
+        "source": "Sales.VIEW_wyzimj",
+        "target": "HumanResources.VIEW_gnmqvk"
+      },
+      {
+        "source": "Inventory.VIEW_rp4h17",
+        "target": "Finance.USER_TABLE_9kc9tn"
+      },
+      {
+        "source": "Sales.SQL_STORED_PROCEDURE_xpghqn",
+        "target": "Inventory.FUNCTION_fp402a"
+      },
+      {
+        "source": "HumanResources.SQL_STORED_PROCEDURE_tzudn",
+        "target": "Sales.USER_TABLE_0s28jb"
+      },
+      {
+        "source": "Sales.USER_TABLE_92qpbk",
+        "target": "Sales.USER_TABLE_mz4dxu"
+      },
+      {
+        "source": "HumanResources.SQL_STORED_PROCEDURE_hra849",
+        "target": "Sales.SQL_STORED_PROCEDURE_12gc0c"
+      },
+      {
+        "source": "Inventory.USER_TABLE_gngn5o",
+        "target": "HumanResources.VIEW_h7fflj"
+      },
+      {
+        "source": "Sales.FUNCTION_v3i7ym",
+        "target": "Finance.USER_TABLE_1ptyde"
+      },
+      {
+        "source": "HumanResources.VIEW_h7fflj",
+        "target": "Inventory.SQL_STORED_PROCEDURE_okart"
+      },
+      {
+        "source": "dbo.SQL_STORED_PROCEDURE_pfxu74",
+        "target": "HumanResources.VIEW_ln3lif"
+      },
+      {
+        "source": "Finance.USER_TABLE_1ptyde",
+        "target": "Inventory.FUNCTION_un5auh"
+      },
+      {
+        "source": "HumanResources.SQL_STORED_PROCEDURE_vdhm9",
+        "target": "Finance.FUNCTION_kotuwv"
+      },
+      {
+        "source": "Inventory.USER_TABLE_9m7dj7",
+        "target": "dbo.USER_TABLE_ydqvdi"
+      },
+      {
+        "source": "Inventory.VIEW_rp4h17",
+        "target": "Inventory.USER_TABLE_uy2j7k"
+      },
+      {
+        "source": "Finance.VIEW_m6huom",
+        "target": "dbo.SQL_STORED_PROCEDURE_pfxu74"
+      },
+      {
+        "source": "Sales.SQL_STORED_PROCEDURE_12gc0c",
+        "target": "HumanResources.SQL_STORED_PROCEDURE_hra849"
+      },
+      {
+        "source": "HumanResources.SQL_STORED_PROCEDURE_vdhm9",
+        "target": "Sales.VIEW_0qtb7w"
+      },
+      {
+        "source": "dbo.SQL_STORED_PROCEDURE_9kkw3m",
+        "target": "Inventory.SQL_STORED_PROCEDURE_smfunl"
+      },
+      {
+        "source": "Sales.USER_TABLE_0s28jb",
+        "target": "Inventory.FUNCTION_386tb"
+      },
+      {
+        "source": "Inventory.FUNCTION_ysw5uc",
+        "target": "Inventory.SQL_STORED_PROCEDURE_y5mv8v"
+      },
+      {
+        "source": "Inventory.FUNCTION_wapfrk",
+        "target": "dbo.FUNCTION_2j0y8o"
+      },
+      {
+        "source": "Inventory.FUNCTION_wapfrk",
+        "target": "Inventory.FUNCTION_un5auh"
+      },
+      {
+        "source": "Sales.VIEW_wyzimj",
+        "target": "HumanResources.SQL_STORED_PROCEDURE_hra849"
+      },
+      {
+        "source": "Inventory.VIEW_0rs8x",
+        "target": "Inventory.SQL_STORED_PROCEDURE_smfunl"
+      },
+      {
+        "source": "Inventory.SQL_STORED_PROCEDURE_okart",
+        "target": "Inventory.VIEW_0rs8x"
+      },
+      {
+        "source": "Inventory.VIEW_tsjbu",
+        "target": "Finance.SQL_STORED_PROCEDURE_grwof"
+      },
+      {
+        "source": "Inventory.SQL_STORED_PROCEDURE_okart",
+        "target": "Finance.USER_TABLE_1ptyde"
+      },
+      {
+        "source": "Inventory.USER_TABLE_uy2j7k",
+        "target": "HumanResources.SQL_STORED_PROCEDURE_hra849"
+      },
+      {
+        "source": "dbo.SQL_STORED_PROCEDURE_1mb805",
+        "target": "dbo.SQL_STORED_PROCEDURE_9kkw3m"
+      },
+      {
+        "source": "Finance.FUNCTION_kotuwv",
+        "target": "Inventory.FUNCTION_fp402a"
+      },
+      {
+        "source": "Finance.VIEW_btakw",
+        "target": "Inventory.VIEW_tsjbu"
+      },
+      {
+        "source": "HumanResources.USER_TABLE_8hmtw",
+        "target": "HumanResources.SQL_STORED_PROCEDURE_tzudn"
+      },
+      {
+        "source": "Finance.USER_TABLE_9iqh3",
+        "target": "HumanResources.USER_TABLE_8hmtw"
+      },
+      {
+        "source": "Sales.VIEW_wyzimj",
+        "target": "Inventory.SQL_STORED_PROCEDURE_okart"
+      },
+      {
+        "source": "HumanResources.USER_TABLE_o30oh9",
+        "target": "Inventory.USER_TABLE_uy2j7k"
+      },
+      {
+        "source": "Inventory.USER_TABLE_uy2j7k",
+        "target": "Inventory.SQL_STORED_PROCEDURE_okart"
+      },
+      {
+        "source": "dbo.SQL_STORED_PROCEDURE_9kkw3m",
+        "target": "dbo.FUNCTION_lfl9ab"
+      },
+      {
+        "source": "Inventory.FUNCTION_un5auh",
+        "target": "Finance.FUNCTION_kotuwv"
+      },
+      {
+        "source": "dbo.USER_TABLE_xebt1c",
+        "target": "HumanResources.VIEW_h7fflj"
+      }
+    ]
+  }

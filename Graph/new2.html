@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Database Object Dependencies Network Graph</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .graph-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        #graph {
+            width: 100%;
+            height: 600px;
+        }
+        #tooltip {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            pointer-events: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .node rect {
+            transition: all 0.3s ease;
+        }
+        .node text {
+            fill: white;
+            font-size: 10px;
+            pointer-events: none;
+        }
+        .link {
+            stroke: #bdc3c7;
+            stroke-opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="graph-container">
+        <h2>Database Object Dependencies</h2>
+        <svg id="graph"></svg>
+        <div id="tooltip" style="display:none;"></div>
+    </div>
+
+    <script>
+        // Graph Data
+        const graphData = {
+            nodes: [
+                { 
+                    id: "dbo.ErrorLog.USER_TABLE", 
+                    schema_name: "dbo", 
+                    object_name: "ErrorLog", 
+                    object_type: "USER_TABLE", 
+                    level: 0, 
+                    cluster: 0, 
+                    in_degree: 0, 
+                    out_degree: 1 
+                },
+                { 
+                    id: "dbo.uspLogError.SQL_STORED_PROCEDURE", 
+                    schema_name: "dbo", 
+                    object_name: "uspLogError", 
+                    object_type: "SQL_STORED_PROCEDURE", 
+                    level: 1, 
+                    cluster: 0, 
+                    in_degree: 1, 
+                    out_degree: 2 
+                },
+                { 
+                    id: "HumanResources.uspUpdateEmployeeHireInfo.SQL_STORED_PROCEDURE", 
+                    schema_name: "HumanResources", 
+                    object_name: "UpdateEmployeeHireInfo", 
+                    object_type: "SQL_STORED_PROCEDURE", 
+                    level: 2, 
+                    cluster: 1, 
+                    in_degree: 1, 
+                    out_degree: 0 
+                },
+                { 
+                    id: "HumanResources.uspUpdateEmployeeLogin.SQL_STORED_PROCEDURE", 
+                    schema_name: "HumanResources", 
+                    object_name: "UpdateEmployeeLogin", 
+                    object_type: "SQL_STORED_PROCEDURE", 
+                    level: 2, 
+                    cluster: 2, 
+                    in_degree: 1, 
+                    out_degree: 0 
+                }
+            ],
+            edges: [
+                { 
+                    source: "dbo.ErrorLog.USER_TABLE", 
+                    target: "dbo.uspLogError.SQL_STORED_PROCEDURE" 
+                },
+                { 
+                    source: "dbo.uspLogError.SQL_STORED_PROCEDURE", 
+                    target: "HumanResources.uspUpdateEmployeeHireInfo.SQL_STORED_PROCEDURE" 
+                },
+                { 
+                    source: "dbo.uspLogError.SQL_STORED_PROCEDURE", 
+                    target: "HumanResources.uspUpdateEmployeeLogin.SQL_STORED_PROCEDURE" 
+                }
+            ]
+        };
+
+        // Color Mapping
+        const COLOR_MAP = {
+            'USER_TABLE': '#3498db',
+            'SQL_STORED_PROCEDURE': '#2ecc71',
+            'DEFAULT': '#95a5a6'
+        };
+
+        // Graph Configuration
+        const width = 800;
+        const height = 600;
+        const nodeWidth = 120;
+        const nodeHeight = 60;
+
+        // Create SVG
+        const svg = d3.select("#graph")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Zoom functionality
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 10])
+            .on('zoom', (event) => {
+                graphGroup.attr('transform', event.transform);
+            });
+        svg.call(zoom);
+
+        // Create graph group
+        const graphGroup = svg.append("g");
+
+        // Force Simulation
+        const simulation = d3.forceSimulation(graphData.nodes)
+            .force('charge', d3.forceManyBody().strength(-300))
+            .force('link', d3.forceLink(graphData.edges).id(d => d.id))
+            .force('center', d3.forceCenter(width / 2, height / 2))
+            .force('collision', d3.forceCollide().radius(nodeWidth / 2));
+
+        // Create Links
+        const links = graphGroup.append("g")
+            .selectAll("line")
+            .data(graphData.edges)
+            .enter().append("line")
+            .attr("class", "link")
+            .attr("stroke-width", 2);
+
+        // Create Nodes
+        const nodes = graphGroup.append("g")
+            .selectAll(".node")
+            .data(graphData.nodes)
+            .enter().append("g")
+            .attr("class", "node")
+            .call(d3.drag()
+                .on('start', dragstarted)
+                .on('drag', dragged)
+                .on('end', dragended));
+
+        // Node Rectangles
+        nodes.append("rect")
+            .attr("width", nodeWidth)
+            .attr("height", nodeHeight)
+            .attr("fill", d => COLOR_MAP[d.object_type] || COLOR_MAP['DEFAULT'])
+            .attr("rx", 5)
+            .attr("ry", 5)
+            .attr("opacity", 0.8);
+
+        // Node Labels
+        nodes.append("text")
+            .text(d => d.object_name)
+            .attr("x", nodeWidth / 2)
+            .attr("y", nodeHeight / 2)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "middle");
+
+        // Tooltip
+        const tooltip = d3.select("#tooltip");
+        nodes.on("mouseover", (event, d) => {
+            tooltip.style("display", "block")
+                .html(`
+                    <strong>${d.object_name}</strong><br>
+                    Schema: ${d.schema_name}<br>
+                    Type: ${d.object_type}<br>
+                    Inputs: ${d.in_degree}<br>
+                    Outputs: ${d.out_degree}
+                `)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY + 10) + "px");
+
+            // Highlight connections
+            links
+                .attr("stroke", l => 
+                    l.source.id === d.id || l.target.id === d.id ? "#e74c3c" : "#bdc3c7"
+                )
+                .attr("stroke-width", l => 
+                    l.source.id === d.id || l.target.id === d.id ? 4 : 2
+                );
+
+            nodes.attr("opacity", n => 
+                n.id === d.id || 
+                graphData.edges.some(e => 
+                    (e.source.id === d.id && e.target.id === n.id) || 
+                    (e.target.id === d.id && e.source.id === n.id)
+                ) ? 1 : 0.3
+            );
+        });
+
+        nodes.on("mouseout", () => {
+            tooltip.style("display", "none");
+            links.attr("stroke", "#bdc3c7").attr("stroke-width", 2);
+            nodes.attr("opacity", 1);
+        });
+
+        // Simulation Tick Handler
+        simulation.on('tick', () => {
+            links
+                .attr("x1", d => d.source.x + nodeWidth / 2)
+                .attr("y1", d => d.source.y + nodeHeight / 2)
+                .attr("x2", d => d.target.x + nodeWidth / 2)
+                .attr("y2", d => d.target.y + nodeHeight / 2);
+
+            nodes.attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+
+        // Drag Functions
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+    </script>
+</body>
+</html>

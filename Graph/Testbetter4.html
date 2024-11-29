@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Advanced Dependency Graph</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Arial', sans-serif; 
+            background-color: #121226; 
+            color: #e0e0e0; 
+            margin: 0; 
+            overflow: hidden; 
+        }
+        #graph-container { 
+            width: 100vw; 
+            height: 100vh; 
+            position: relative; 
+        }
+        .node {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .node rect {
+            stroke-width: 2px;
+            transition: all 0.3s ease;
+        }
+        .node text {
+            font-size: 12px;
+            fill: white;
+            font-weight: bold;
+        }
+        .link {
+            fill: none;
+            stroke-width: 2px;
+            stroke-opacity: 0.4;
+            transition: all 0.3s ease;
+        }
+        .link-incoming {
+            stroke: #3498db;  /* Bright blue for incoming links */
+        }
+        .link-outgoing {
+            stroke: #2ecc71;  /* Green for outgoing links */
+        }
+        .highlight-node {
+            transform: scale(1.2);
+        }
+        .tooltip {
+            position: absolute;
+            background: rgba(30, 30, 50, 0.9);
+            border-radius: 8px;
+            padding: 12px;
+            pointer-events: none;
+            max-width: 250px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="graph-container"></div>
+    <script>
+function createEnhancedDependencyGraph(data) {
+    const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+    const width = window.innerWidth - margin.left - margin.right;
+    const height = window.innerHeight - margin.top - margin.bottom;
+
+    // Enhanced cluster color mapping
+    const clusterColors = {
+        0: '#2c3e50',   // Dark blue-gray
+        1: '#8e44ad',   // Purple
+        2: '#e74c3c',   // Bright red
+        3: '#27ae60',   // Green
+        DEFAULT: '#34495e'
+    };
+
+    // Advanced node positioning with more spacing
+    const nodesByLevel = {};
+    const nodesByCluster = {};
+
+    // Group nodes by level and cluster
+    data.nodes.forEach(node => {
+        if (!nodesByLevel[node.level]) nodesByLevel[node.level] = [];
+        if (!nodesByCluster[node.cluster]) nodesByCluster[node.cluster] = [];
+        
+        nodesByLevel[node.level].push(node);
+        nodesByCluster[node.cluster].push(node);
+    });
+
+    // Calculate node positions with improved spacing
+    const VERTICAL_SPACING = height / (Object.keys(nodesByLevel).length + 2);
+    const HORIZONTAL_SPACING = width / (Object.keys(nodesByCluster).length + 2);
+    const NODE_WIDTH = 200;
+    const NODE_HEIGHT = 50;
+    const NODE_MARGIN = 30;
+
+    data.nodes.forEach(node => {
+        const levelNodes = nodesByLevel[node.level];
+        const clusterNodes = nodesByCluster[node.cluster];
+        const levelIndex = levelNodes.indexOf(node);
+        const clusterIndex = clusterNodes.indexOf(node);
+
+        node.x = (node.cluster + 1) * HORIZONTAL_SPACING + 
+                 (clusterIndex * NODE_MARGIN);
+        node.y = (node.level + 1) * VERTICAL_SPACING + 
+                 (levelIndex * (NODE_HEIGHT + NODE_MARGIN));
+    });
+
+    // SVG setup
+    const svg = d3.select("#graph-container")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Tooltip
+    const tooltip = d3.select("body")
+        .append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+
+    // Improved link path generation
+    function generateLinkPath(source, target) {
+        return d3.linkVertical()({
+            source: [source.x + NODE_WIDTH/2, source.y + NODE_HEIGHT],
+            target: [target.x + NODE_WIDTH/2, target.y]
+        });
+    }
+
+    // Draw links first
+    const links = svg.selectAll(".link")
+        .data(data.edges)
+        .enter().append("path")
+        .attr("class", d => {
+            const source = data.nodes.find(n => n.id === d.source);
+            const target = data.nodes.find(n => n.id === d.target);
+            return `link link-outgoing`;
+        })
+        .attr("d", d => {
+            const source = data.nodes.find(n => n.id === d.source);
+            const target = data.nodes.find(n => n.id === d.target);
+            return generateLinkPath(source, target);
+        })
+        .attr("stroke", d => {
+            const source = data.nodes.find(n => n.id === d.source);
+            return clusterColors[source.cluster] || clusterColors.DEFAULT;
+        });
+
+    // Draw nodes
+    const nodes = svg.selectAll(".node")
+        .data(data.nodes)
+        .enter().append("g")
+        .attr("class", "node")
+        .attr("transform", d => `translate(${d.x},${d.y})`)
+        .on("mouseover", function(event, hoverNode) {
+            // Find connected nodes
+            const connectedNodes = new Set([hoverNode.id]);
+            const connectedIncomingLinks = new Set();
+            const connectedOutgoingLinks = new Set();
+
+            data.edges.forEach(edge => {
+                if (edge.source === hoverNode.id) {
+                    connectedNodes.add(edge.target);
+                    connectedOutgoingLinks.add(edge);
+                }
+                if (edge.target === hoverNode.id) {
+                    connectedNodes.add(edge.source);
+                    connectedIncomingLinks.add(edge);
+                }
+            });
+
+            // Update link styles
+            links
+                .attr("class", link => {
+                    if (connectedIncomingLinks.has(link)) 
+                        return "link link-incoming highlight-link";
+                    if (connectedOutgoingLinks.has(link)) 
+                        return "link link-outgoing highlight-link";
+                    return "link";
+                })
+                .attr("stroke-width", link => 
+                    connectedIncomingLinks.has(link) || 
+                    connectedOutgoingLinks.has(link) ? 4 : 2
+                );
+
+            // Update node styles
+            nodes.select("rect")
+                .attr("fill", node => 
+                    connectedNodes.has(node.id) 
+                    ? (clusterColors[node.cluster] || clusterColors.DEFAULT) 
+                    : "#1a1a1a"
+                )
+                .attr("opacity", node => 
+                    connectedNodes.has(node.id) ? 1 : 0.3
+                );
+
+            // Highlight connected nodes
+            nodes.attr("transform", node => {
+                const baseTransform = `translate(${node.x},${node.y})`;
+                return connectedNodes.has(node.id) 
+                    ? `${baseTransform} scale(1.1)` 
+                    : baseTransform;
+            });
+
+            // Show tooltip
+            tooltip.transition().duration(200).style("opacity", 0.9);
+            tooltip.html(`
+                <strong>${hoverNode.object_name}</strong><br>
+                Type: ${hoverNode.object_type}<br>
+                Schema: ${hoverNode.schema_name}<br>
+                Level: ${hoverNode.level}<br>
+                Cluster: ${hoverNode.cluster}<br>
+                In Degree: ${hoverNode.in_degree}<br>
+                Out Degree: ${hoverNode.out_degree}
+            `)
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 10) + "px");
+        })
+        .on("mouseout", function() {
+            // Reset all styles
+            links
+                .attr("class", "link")
+                .attr("stroke-width", 2);
+            
+            nodes
+                .attr("transform", node => `translate(${node.x},${node.y})`)
+                .select("rect")
+                .attr("fill", (d) => clusterColors[d.cluster] || clusterColors.DEFAULT)
+                .attr("opacity", 1);
+            
+            tooltip.transition().duration(500).style("opacity", 0);
+        });
+
+    // Node rectangles with cluster-based background
+    nodes.append("rect")
+        .attr("width", NODE_WIDTH)
+        .attr("height", NODE_HEIGHT)
+        .attr("fill", d => clusterColors[d.cluster] || clusterColors.DEFAULT)
+        .attr("rx", 10)
+        .attr("ry", 10)
+        .attr("stroke", "rgba(255,255,255,0.2)")
+        .attr("stroke-width", 2);
+
+    // Node labels
+    nodes.append("text")
+        .attr("x", NODE_WIDTH / 2)
+        .attr("y", NODE_HEIGHT / 2)
+        .attr("text-anchor", "middle")
+        .attr("alignment-baseline", "middle")
+        .text(d => d.object_name)
+        .attr("fill", "white")
+        .attr("font-weight", "bold");
+}
+
+// Sample data remains the same
+const graphData = {
+    "nodes": [
+        {
+            "id": "dbo.ErrorLog.USER_TABLE",
+            "schema_name": "dbo",
+            "object_name": "ErrorLog",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 3,
+            "in_degree": 0,
+            "out_degree": 1
+        },
+        {
+            "id": "dbo.uspLogError.SQL_STORED_PROCEDURE",
+            "schema_name": "dbo",
+            "object_name": "uspLogError",
+            "object_type": "SQL_STORED_PROCEDURE",
+            "level": 2,
+            "cluster": 3,
+            "in_degree": 2,
+            "out_degree": 11
+        },
+        {
+            "id": "dbo.ufnGetAccountingEndDate.SQL_SCALAR_FUNCTION",
+            "schema_name": "dbo",
+            "object_name": "ufnGetAccountingEndDate",
+            "object_type": "SQL_SCALAR_FUNCTION",
+            "level": 1,
+            "cluster": 4,
+            "in_degree": 0,
+            "out_degree": 1
+        },
+        {
+            "id": "Sales.uSalesOrderHeader.SQL_TRIGGER",
+            "schema_name": "Sales",
+            "object_name": "uSalesOrderHeader",
+            "object_type": "SQL_TRIGGER",
+            "level": 3,
+            "cluster": 4,
+            "in_degree": 7,
+            "out_degree": 0
+        },
+        {
+            "id": "dbo.ufnGetAccountingStartDate.SQL_SCALAR_FUNCTION",
+            "schema_name": "dbo",
+            "object_name": "ufnGetAccountingStartDate",
+            "object_type": "SQL_SCALAR_FUNCTION",
+            "level": 1,
+            "cluster": 4,
+            "in_degree": 0,
+            "out_degree": 1
+        },
+        {
+            "id": "dbo.ufnLeadingZeros.SQL_SCALAR_FUNCTION",
+            "schema_name": "dbo",
+            "object_name": "ufnLeadingZeros",
+            "object_type": "SQL_SCALAR_FUNCTION",
+            "level": 1,
+            "cluster": 0,
+            "in_degree": 0,
+            "out_degree": 1
+        },
+        {
+            "id": "Sales.Customer.USER_TABLE",
+            "schema_name": "Sales",
+            "object_name": "Customer",
+            "object_type": "USER_TABLE",
+            "level": 2,
+            "cluster": 0,
+            "in_degree": 1,
+            "out_degree": 3
+        },
+        {
+            "id": "HumanResources.uspUpdateEmployeeHireInfo.SQL_STORED_PROCEDURE",
+            "schema_name": "HumanResources",
+            "object_name": "uspUpdateEmployeeHireInfo",
+            "object_type": "SQL_STORED_PROCEDURE",
+            "level": 3,
+            "cluster": 1,
+            "in_degree": 3,
+            "out_degree": 0
+        },
+        {
+            "id": "HumanResources.uspUpdateEmployeeLogin.SQL_STORED_PROCEDURE",
+            "schema_name": "HumanResources",
+            "object_name": "uspUpdateEmployeeLogin",
+            "object_type": "SQL_STORED_PROCEDURE",
+            "level": 3,
+            "cluster": 1,
+                "in_degree": 2,
+                "out_degree": 0
+        },
+        {
+            "id": "HumanResources.uspUpdateEmployeePersonalInfo.SQL_STORED_PROCEDURE",
+            "schema_name": "HumanResources",
+            "object_name": "uspUpdateEmployeePersonalInfo",
+            "object_type": "SQL_STORED_PROCEDURE",
+            "level": 3,
+            "cluster": 1,
+            "in_degree": 2,
+            "out_degree": 0
+        },
+        {
+            "id": "Production.iWorkOrder.SQL_TRIGGER",
+            "schema_name": "Production",
+            "object_name": "iWorkOrder",
+            "object_type": "SQL_TRIGGER",
+            "level": 3,
+            "cluster": 3,
+            "in_degree": 3,
+            "out_degree": 0
+        },
+        {
+            "id": "Production.uWorkOrder.SQL_TRIGGER",
+            "schema_name": "Production",
+            "object_name": "uWorkOrder",
+            "object_type": "SQL_TRIGGER",
+            "level": 3,
+            "cluster": 3,
+            "in_degree": 3,
+            "out_degree": 0
+        },
+        {
+            "id": "Purchasing.dVendor.SQL_TRIGGER",
+            "schema_name": "Purchasing",
+            "object_name": "dVendor",
+            "object_type": "SQL_TRIGGER",
+            "level": 3,
+            "cluster": 3,
+            "in_degree": 2,
+            "out_degree": 0
+        },
+        {
+            "id": "Purchasing.iPurchaseOrderDetail.SQL_TRIGGER",
+            "schema_name": "Purchasing",
+            "object_name": "iPurchaseOrderDetail",
+            "object_type": "SQL_TRIGGER",
+            "level": 3,
+            "cluster": 3,
+            "in_degree": 5,
+            "out_degree": 0
+        },
+        {
+            "id": "Purchasing.uPurchaseOrderDetail.SQL_TRIGGER",
+            "schema_name": "Purchasing",
+            "object_name": "uPurchaseOrderDetail",
+            "object_type": "SQL_TRIGGER",
+            "level": 3,
+            "cluster": 3,
+            "in_degree": 5,
+            "out_degree": 0
+        },
+        {
+            "id": "Purchasing.uPurchaseOrderHeader.SQL_TRIGGER",
+            "schema_name": "Purchasing",
+            "object_name": "uPurchaseOrderHeader",
+            "object_type": "SQL_TRIGGER",
+            "level": 3,
+            "cluster": 3,
+            "in_degree": 3,
+            "out_degree": 0
+        },
+        {
+            "id": "Sales.iduSalesOrderDetail.SQL_TRIGGER",
+            "schema_name": "Sales",
+            "object_name": "iduSalesOrderDetail",
+            "object_type": "SQL_TRIGGER",
+            "level": 3,
+            "cluster": 3,
+            "in_degree": 7,
+            "out_degree": 0
+        },
+        {
+            "id": "dbo.uspPrintError.SQL_STORED_PROCEDURE",
+            "schema_name": "dbo",
+            "object_name": "uspPrintError",
+            "object_type": "SQL_STORED_PROCEDURE",
+            "level": 1,
+            "cluster": 3,
+            "in_degree": 0,
+            "out_degree": 9
+        },
+        {
+            "id": "HumanResources.Department.USER_TABLE",
+            "schema_name": "HumanResources",
+            "object_name": "Department",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 1,
+            "in_degree": 0,
+            "out_degree": 2
+        },
+        {
+            "id": "HumanResources.vEmployeeDepartment.VIEW",
+            "schema_name": "HumanResources",
+            "object_name": "vEmployeeDepartment",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 1,
+            "in_degree": 4,
+            "out_degree": 0
+        },
+        {
+            "id": "HumanResources.vEmployeeDepartmentHistory.VIEW",
+            "schema_name": "HumanResources",
+            "object_name": "vEmployeeDepartmentHistory",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 1,
+            "in_degree": 5,
+            "out_degree": 0
+        },
+        {
+            "id": "HumanResources.Employee.USER_TABLE",
+            "schema_name": "HumanResources",
+            "object_name": "Employee",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 1,
+            "in_degree": 0,
+            "out_degree": 11
+        },
+        {
+            "id": "dbo.ufnGetContactInformation.SQL_TABLE_VALUED_FUNCTION",
+            "schema_name": "dbo",
+            "object_name": "ufnGetContactInformation",
+            "object_type": "SQL_TABLE_VALUED_FUNCTION",
+            "level": 3,
+            "cluster": 0,
+            "in_degree": 7,
+            "out_degree": 0
+        },
+        {
+            "id": "dbo.uspGetEmployeeManagers.SQL_STORED_PROCEDURE",
+            "schema_name": "dbo",
+            "object_name": "uspGetEmployeeManagers",
+            "object_type": "SQL_STORED_PROCEDURE",
+            "level": 2,
+            "cluster": 1,
+            "in_degree": 2,
+            "out_degree": 0
+        },
+        {
+            "id": "dbo.uspGetManagerEmployees.SQL_STORED_PROCEDURE",
+            "schema_name": "dbo",
+            "object_name": "uspGetManagerEmployees",
+            "object_type": "SQL_STORED_PROCEDURE",
+            "level": 2,
+            "cluster": 1,
+            "in_degree": 2,
+            "out_degree": 0
+        },
+        {
+            "id": "HumanResources.vEmployee.VIEW",
+            "schema_name": "HumanResources",
+            "object_name": "vEmployee",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 0,
+            "in_degree": 9,
+            "out_degree": 0
+        },
+        {
+            "id": "Sales.vSalesPerson.VIEW",
+            "schema_name": "Sales",
+            "object_name": "vSalesPerson",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 0,
+            "in_degree": 11,
+            "out_degree": 0
+        },
+        {
+            "id": "Sales.vSalesPersonSalesByFiscalYears.VIEW",
+            "schema_name": "Sales",
+            "object_name": "vSalesPersonSalesByFiscalYears",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 4,
+            "in_degree": 5,
+            "out_degree": 0
+        },
+        {
+            "id": "HumanResources.EmployeeDepartmentHistory.USER_TABLE",
+            "schema_name": "HumanResources",
+            "object_name": "EmployeeDepartmentHistory",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 1,
+            "in_degree": 0,
+            "out_degree": 2
+        },
+        {
+            "id": "HumanResources.EmployeePayHistory.USER_TABLE",
+            "schema_name": "HumanResources",
+            "object_name": "EmployeePayHistory",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 1,
+            "in_degree": 0,
+            "out_degree": 1
+        },
+        {
+            "id": "HumanResources.JobCandidate.USER_TABLE",
+            "schema_name": "HumanResources",
+            "object_name": "JobCandidate",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 5,
+            "in_degree": 0,
+            "out_degree": 3
+        },
+        {
+            "id": "HumanResources.vJobCandidate.VIEW",
+            "schema_name": "HumanResources",
+            "object_name": "vJobCandidate",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 5,
+            "in_degree": 1,
+            "out_degree": 0
+        },
+        {
+            "id": "HumanResources.vJobCandidateEducation.VIEW",
+            "schema_name": "HumanResources",
+            "object_name": "vJobCandidateEducation",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 5,
+            "in_degree": 1,
+            "out_degree": 0
+        },
+        {
+            "id": "HumanResources.vJobCandidateEmployment.VIEW",
+            "schema_name": "HumanResources",
+            "object_name": "vJobCandidateEmployment",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 5,
+            "in_degree": 1,
+            "out_degree": 0
+        },
+        {
+            "id": "HumanResources.Shift.USER_TABLE",
+            "schema_name": "HumanResources",
+            "object_name": "Shift",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 1,
+            "in_degree": 0,
+            "out_degree": 1
+        },
+        {
+            "id": "Person.Address.USER_TABLE",
+            "schema_name": "Person",
+            "object_name": "Address",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 0,
+            "in_degree": 0,
+            "out_degree": 5
+        },
+        {
+            "id": "Purchasing.vVendorWithAddresses.VIEW",
+            "schema_name": "Purchasing",
+            "object_name": "vVendorWithAddresses",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 0,
+            "in_degree": 6,
+            "out_degree": 0
+        },
+        {
+            "id": "Sales.vIndividualCustomer.VIEW",
+            "schema_name": "Sales",
+            "object_name": "vIndividualCustomer",
+            "object_type": "VIEW",
+            "level": 3,
+            "cluster": 0,
+            "in_degree": 10,
+            "out_degree": 0
+        },
+        {
+            "id": "Sales.vStoreWithAddresses.VIEW",
+            "schema_name": "Sales",
+            "object_name": "vStoreWithAddresses",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 0,
+            "in_degree": 6,
+            "out_degree": 0
+        },
+        {
+            "id": "Person.AddressType.USER_TABLE",
+            "schema_name": "Person",
+            "object_name": "AddressType",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 0,
+            "in_degree": 0,
+            "out_degree": 3
+        },
+        {
+            "id": "Person.BusinessEntityAddress.USER_TABLE",
+            "schema_name": "Person",
+            "object_name": "BusinessEntityAddress",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 0,
+            "in_degree": 0,
+            "out_degree": 5
+        },
+        {
+            "id": "Person.BusinessEntityContact.USER_TABLE",
+            "schema_name": "Person",
+            "object_name": "BusinessEntityContact",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 0,
+            "in_degree": 0,
+            "out_degree": 3
+        },
+        {
+            "id": "Purchasing.vVendorWithContacts.VIEW",
+            "schema_name": "Purchasing",
+            "object_name": "vVendorWithContacts",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 0,
+            "in_degree": 7,
+            "out_degree": 0
+        },
+        {
+            "id": "Sales.vStoreWithContacts.VIEW",
+            "schema_name": "Sales",
+            "object_name": "vStoreWithContacts",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 0,
+            "in_degree": 7,
+            "out_degree": 0
+        },
+        {
+            "id": "Person.ContactType.USER_TABLE",
+            "schema_name": "Person",
+            "object_name": "ContactType",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 0,
+            "in_degree": 0,
+            "out_degree": 3
+        },
+        {
+            "id": "Person.CountryRegion.USER_TABLE",
+            "schema_name": "Person",
+            "object_name": "CountryRegion",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 0,
+            "in_degree": 0,
+            "out_degree": 6
+        },
+        {
+            "id": "Person.vStateProvinceCountryRegion.VIEW",
+            "schema_name": "Person",
+            "object_name": "vStateProvinceCountryRegion",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 0,
+            "in_degree": 2,
+            "out_degree": 0
+        },
+        {
+            "id": "Person.EmailAddress.USER_TABLE",
+            "schema_name": "Person",
+            "object_name": "EmailAddress",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 0,
+            "in_degree": 0,
+            "out_degree": 5
+        },
+        {
+            "id": "Person.Person.USER_TABLE",
+            "schema_name": "Person",
+            "object_name": "Person",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 1,
+            "in_degree": 0,
+            "out_degree": 15
+        },
+        {
+            "id": "Person.iuPerson.SQL_TRIGGER",
+            "schema_name": "Person",
+            "object_name": "iuPerson",
+            "object_type": "SQL_TRIGGER",
+            "level": 2,
+            "cluster": 1,
+            "in_degree": 1,
+            "out_degree": 0
+        },
+        {
+            "id": "Person.vAdditionalContactInfo.VIEW",
+            "schema_name": "Person",
+            "object_name": "vAdditionalContactInfo",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 1,
+            "in_degree": 1,
+            "out_degree": 0
+        },
+        {
+            "id": "Sales.vPersonDemographics.VIEW",
+            "schema_name": "Sales",
+            "object_name": "vPersonDemographics",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 1,
+            "in_degree": 1,
+            "out_degree": 0
+        },
+        {
+            "id": "Person.PersonPhone.USER_TABLE",
+            "schema_name": "Person",
+            "object_name": "PersonPhone",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 0,
+            "in_degree": 0,
+            "out_degree": 5
+        },
+        {
+            "id": "Person.PhoneNumberType.USER_TABLE",
+            "schema_name": "Person",
+            "object_name": "PhoneNumberType",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 0,
+            "in_degree": 0,
+            "out_degree": 5
+        },
+        {
+            "id": "Person.StateProvince.USER_TABLE",
+            "schema_name": "Person",
+            "object_name": "StateProvince",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 0,
+            "in_degree": 0,
+            "out_degree": 6
+        },
+        {
+            "id": "Production.BillOfMaterials.USER_TABLE",
+            "schema_name": "Production",
+            "object_name": "BillOfMaterials",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 2,
+            "in_degree": 0,
+            "out_degree": 2
+        },
+        {
+            "id": "dbo.uspGetBillOfMaterials.SQL_STORED_PROCEDURE",
+            "schema_name": "dbo",
+            "object_name": "uspGetBillOfMaterials",
+            "object_type": "SQL_STORED_PROCEDURE",
+            "level": 2,
+            "cluster": 2,
+            "in_degree": 2,
+            "out_degree": 0
+        },
+        {
+            "id": "dbo.uspGetWhereUsedProductID.SQL_STORED_PROCEDURE",
+            "schema_name": "dbo",
+            "object_name": "uspGetWhereUsedProductID",
+            "object_type": "SQL_STORED_PROCEDURE",
+            "level": 2,
+            "cluster": 2,
+            "in_degree": 2,
+            "out_degree": 0
+        },
+        {
+            "id": "Production.Document.USER_TABLE",
+            "schema_name": "Production",
+            "object_name": "Document",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 7,
+            "in_degree": 0,
+            "out_degree": 0
+        },
+        {
+            "id": "Production.Product.USER_TABLE",
+            "schema_name": "Production",
+            "object_name": "Product",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 2,
+            "in_degree": 0,
+            "out_degree": 6
+        },
+        {
+            "id": "dbo.ufnGetProductDealerPrice.SQL_SCALAR_FUNCTION",
+            "schema_name": "dbo",
+            "object_name": "ufnGetProductDealerPrice",
+            "object_type": "SQL_SCALAR_FUNCTION",
+            "level": 2,
+            "cluster": 2,
+            "in_degree": 2,
+            "out_degree": 0
+        },
+        {
+            "id": "dbo.ufnGetProductListPrice.SQL_SCALAR_FUNCTION",
+            "schema_name": "dbo",
+            "object_name": "ufnGetProductListPrice",
+            "object_type": "SQL_SCALAR_FUNCTION",
+            "level": 2,
+            "cluster": 2,
+            "in_degree": 2,
+            "out_degree": 0
+        },
+        {
+            "id": "dbo.ufnGetProductStandardCost.SQL_SCALAR_FUNCTION",
+            "schema_name": "dbo",
+            "object_name": "ufnGetProductStandardCost",
+            "object_type": "SQL_SCALAR_FUNCTION",
+            "level": 2,
+            "cluster": 2,
+            "in_degree": 2,
+            "out_degree": 0
+        },
+        {
+            "id": "Production.vProductAndDescription.VIEW",
+            "schema_name": "Production",
+            "object_name": "vProductAndDescription",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 2,
+            "in_degree": 4,
+            "out_degree": 0
+        },
+        {
+            "id": "Production.ProductCostHistory.USER_TABLE",
+            "schema_name": "Production",
+            "object_name": "ProductCostHistory",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 2,
+            "in_degree": 0,
+            "out_degree": 1
+        },
+        {
+            "id": "Production.ProductDescription.USER_TABLE",
+            "schema_name": "Production",
+            "object_name": "ProductDescription",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 2,
+            "in_degree": 0,
+            "out_degree": 1
+        },
+        {
+            "id": "Production.ProductInventory.USER_TABLE",
+            "schema_name": "Production",
+            "object_name": "ProductInventory",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 6,
+            "in_degree": 0,
+            "out_degree": 1
+        },
+        {
+            "id": "dbo.ufnGetStock.SQL_SCALAR_FUNCTION",
+            "schema_name": "dbo",
+            "object_name": "ufnGetStock",
+            "object_type": "SQL_SCALAR_FUNCTION",
+            "level": 2,
+            "cluster": 6,
+            "in_degree": 1,
+            "out_degree": 0
+        },
+        {
+            "id": "Production.ProductListPriceHistory.USER_TABLE",
+            "schema_name": "Production",
+            "object_name": "ProductListPriceHistory",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 2,
+            "in_degree": 0,
+            "out_degree": 2
+        },
+        {
+            "id": "Production.ProductModel.USER_TABLE",
+            "schema_name": "Production",
+            "object_name": "ProductModel",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 2,
+            "in_degree": 0,
+            "out_degree": 3
+        },
+        {
+            "id": "Production.vProductModelCatalogDescription.VIEW",
+            "schema_name": "Production",
+            "object_name": "vProductModelCatalogDescription",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 2,
+            "in_degree": 1,
+            "out_degree": 0
+        },
+        {
+            "id": "Production.vProductModelInstructions.VIEW",
+            "schema_name": "Production",
+            "object_name": "vProductModelInstructions",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 2,
+            "in_degree": 1,
+            "out_degree": 0
+        },
+        {
+            "id": "Production.ProductModelProductDescriptionCulture.USER_TABLE",
+            "schema_name": "Production",
+            "object_name": "ProductModelProductDescriptionCulture",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 2,
+            "in_degree": 0,
+            "out_degree": 1
+        },
+        {
+            "id": "Production.TransactionHistory.USER_TABLE",
+            "schema_name": "Production",
+            "object_name": "TransactionHistory",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 3,
+            "in_degree": 0,
+            "out_degree": 5
+        },
+        {
+            "id": "Production.WorkOrder.USER_TABLE",
+            "schema_name": "Production",
+            "object_name": "WorkOrder",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 8,
+            "in_degree": 0,
+            "out_degree": 0
+        },
+        {
+            "id": "Purchasing.PurchaseOrderDetail.USER_TABLE",
+            "schema_name": "Purchasing",
+            "object_name": "PurchaseOrderDetail",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 3,
+            "in_degree": 0,
+            "out_degree": 2
+        },
+        {
+            "id": "Purchasing.PurchaseOrderHeader.USER_TABLE",
+            "schema_name": "Purchasing",
+            "object_name": "PurchaseOrderHeader",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 3,
+            "in_degree": 0,
+            "out_degree": 3
+        },
+        {
+            "id": "Purchasing.Vendor.USER_TABLE",
+            "schema_name": "Purchasing",
+            "object_name": "Vendor",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 0,
+            "in_degree": 0,
+            "out_degree": 3
+        },
+        {
+            "id": "Sales.SalesOrderDetail.USER_TABLE",
+            "schema_name": "Sales",
+            "object_name": "SalesOrderDetail",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 3,
+            "in_degree": 0,
+            "out_degree": 1
+        },
+        {
+            "id": "Sales.SalesOrderHeader.USER_TABLE",
+            "schema_name": "Sales",
+            "object_name": "SalesOrderHeader",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 4,
+            "in_degree": 0,
+            "out_degree": 3
+        },
+        {
+            "id": "Sales.SalesPerson.USER_TABLE",
+            "schema_name": "Sales",
+            "object_name": "SalesPerson",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 4,
+            "in_degree": 0,
+            "out_degree": 3
+        },
+        {
+            "id": "Sales.SalesTerritory.USER_TABLE",
+            "schema_name": "Sales",
+            "object_name": "SalesTerritory",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 4,
+            "in_degree": 0,
+            "out_degree": 3
+        },
+        {
+            "id": "Sales.Store.USER_TABLE",
+            "schema_name": "Sales",
+            "object_name": "Store",
+            "object_type": "USER_TABLE",
+            "level": 1,
+            "cluster": 0,
+            "in_degree": 0,
+            "out_degree": 4
+        },
+        {
+            "id": "Sales.vStoreWithDemographics.VIEW",
+            "schema_name": "Sales",
+            "object_name": "vStoreWithDemographics",
+            "object_type": "VIEW",
+            "level": 2,
+            "cluster": 0,
+            "in_degree": 1,
+            "out_degree": 0
+        }
+    ],
+    "edges": [
+        {
+            "source": "dbo.ErrorLog.USER_TABLE",
+            "target": "dbo.uspLogError.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "dbo.uspLogError.SQL_STORED_PROCEDURE",
+            "target": "HumanResources.uspUpdateEmployeeHireInfo.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "dbo.uspLogError.SQL_STORED_PROCEDURE",
+            "target": "HumanResources.uspUpdateEmployeeLogin.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "dbo.uspLogError.SQL_STORED_PROCEDURE",
+            "target": "HumanResources.uspUpdateEmployeePersonalInfo.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "dbo.uspLogError.SQL_STORED_PROCEDURE",
+            "target": "Production.iWorkOrder.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspLogError.SQL_STORED_PROCEDURE",
+            "target": "Production.uWorkOrder.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspLogError.SQL_STORED_PROCEDURE",
+            "target": "Purchasing.dVendor.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspLogError.SQL_STORED_PROCEDURE",
+            "target": "Purchasing.iPurchaseOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspLogError.SQL_STORED_PROCEDURE",
+            "target": "Purchasing.uPurchaseOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspLogError.SQL_STORED_PROCEDURE",
+            "target": "Purchasing.uPurchaseOrderHeader.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspLogError.SQL_STORED_PROCEDURE",
+            "target": "Sales.iduSalesOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspLogError.SQL_STORED_PROCEDURE",
+            "target": "Sales.uSalesOrderHeader.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.ufnGetAccountingEndDate.SQL_SCALAR_FUNCTION",
+            "target": "Sales.uSalesOrderHeader.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.ufnGetAccountingStartDate.SQL_SCALAR_FUNCTION",
+            "target": "Sales.uSalesOrderHeader.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.ufnLeadingZeros.SQL_SCALAR_FUNCTION",
+            "target": "Sales.Customer.USER_TABLE"
+        },
+        {
+            "source": "Sales.Customer.USER_TABLE",
+            "target": "dbo.ufnGetContactInformation.SQL_TABLE_VALUED_FUNCTION"
+        },
+        {
+            "source": "Sales.Customer.USER_TABLE",
+            "target": "Sales.iduSalesOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "Sales.Customer.USER_TABLE",
+            "target": "Sales.vIndividualCustomer.VIEW"
+        },
+        {
+            "source": "dbo.uspPrintError.SQL_STORED_PROCEDURE",
+            "target": "dbo.uspLogError.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "dbo.uspPrintError.SQL_STORED_PROCEDURE",
+            "target": "Production.iWorkOrder.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspPrintError.SQL_STORED_PROCEDURE",
+            "target": "Production.uWorkOrder.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspPrintError.SQL_STORED_PROCEDURE",
+            "target": "Purchasing.dVendor.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspPrintError.SQL_STORED_PROCEDURE",
+            "target": "Purchasing.iPurchaseOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspPrintError.SQL_STORED_PROCEDURE",
+            "target": "Purchasing.uPurchaseOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspPrintError.SQL_STORED_PROCEDURE",
+            "target": "Purchasing.uPurchaseOrderHeader.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspPrintError.SQL_STORED_PROCEDURE",
+            "target": "Sales.iduSalesOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "dbo.uspPrintError.SQL_STORED_PROCEDURE",
+            "target": "Sales.uSalesOrderHeader.SQL_TRIGGER"
+        },
+        {
+            "source": "HumanResources.Department.USER_TABLE",
+            "target": "HumanResources.vEmployeeDepartment.VIEW"
+        },
+        {
+            "source": "HumanResources.Department.USER_TABLE",
+            "target": "HumanResources.vEmployeeDepartmentHistory.VIEW"
+        },
+        {
+            "source": "HumanResources.Employee.USER_TABLE",
+            "target": "dbo.ufnGetContactInformation.SQL_TABLE_VALUED_FUNCTION"
+        },
+        {
+            "source": "HumanResources.Employee.USER_TABLE",
+            "target": "dbo.uspGetEmployeeManagers.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "HumanResources.Employee.USER_TABLE",
+            "target": "dbo.uspGetManagerEmployees.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "HumanResources.Employee.USER_TABLE",
+            "target": "HumanResources.uspUpdateEmployeeHireInfo.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "HumanResources.Employee.USER_TABLE",
+            "target": "HumanResources.uspUpdateEmployeeLogin.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "HumanResources.Employee.USER_TABLE",
+            "target": "HumanResources.uspUpdateEmployeePersonalInfo.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "HumanResources.Employee.USER_TABLE",
+            "target": "HumanResources.vEmployee.VIEW"
+        },
+        {
+            "source": "HumanResources.Employee.USER_TABLE",
+            "target": "HumanResources.vEmployeeDepartment.VIEW"
+        },
+        {
+            "source": "HumanResources.Employee.USER_TABLE",
+            "target": "HumanResources.vEmployeeDepartmentHistory.VIEW"
+        },
+        {
+            "source": "HumanResources.Employee.USER_TABLE",
+            "target": "Sales.vSalesPerson.VIEW"
+        },
+        {
+            "source": "HumanResources.Employee.USER_TABLE",
+            "target": "Sales.vSalesPersonSalesByFiscalYears.VIEW"
+        },
+        {
+            "source": "HumanResources.EmployeeDepartmentHistory.USER_TABLE",
+            "target": "HumanResources.vEmployeeDepartment.VIEW"
+        },
+        {
+            "source": "HumanResources.EmployeeDepartmentHistory.USER_TABLE",
+            "target": "HumanResources.vEmployeeDepartmentHistory.VIEW"
+        },
+        {
+            "source": "HumanResources.EmployeePayHistory.USER_TABLE",
+            "target": "HumanResources.uspUpdateEmployeeHireInfo.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "HumanResources.JobCandidate.USER_TABLE",
+            "target": "HumanResources.vJobCandidate.VIEW"
+        },
+        {
+            "source": "HumanResources.JobCandidate.USER_TABLE",
+            "target": "HumanResources.vJobCandidateEducation.VIEW"
+        },
+        {
+            "source": "HumanResources.JobCandidate.USER_TABLE",
+            "target": "HumanResources.vJobCandidateEmployment.VIEW"
+        },
+        {
+            "source": "HumanResources.Shift.USER_TABLE",
+            "target": "HumanResources.vEmployeeDepartmentHistory.VIEW"
+        },
+        {
+            "source": "Person.Address.USER_TABLE",
+            "target": "HumanResources.vEmployee.VIEW"
+        },
+        {
+            "source": "Person.Address.USER_TABLE",
+            "target": "Purchasing.vVendorWithAddresses.VIEW"
+        },
+        {
+            "source": "Person.Address.USER_TABLE",
+            "target": "Sales.vIndividualCustomer.VIEW"
+        },
+        {
+            "source": "Person.Address.USER_TABLE",
+            "target": "Sales.vSalesPerson.VIEW"
+        },
+        {
+            "source": "Person.Address.USER_TABLE",
+            "target": "Sales.vStoreWithAddresses.VIEW"
+        },
+        {
+            "source": "Person.AddressType.USER_TABLE",
+            "target": "Purchasing.vVendorWithAddresses.VIEW"
+        },
+        {
+            "source": "Person.AddressType.USER_TABLE",
+            "target": "Sales.vIndividualCustomer.VIEW"
+        },
+        {
+            "source": "Person.AddressType.USER_TABLE",
+            "target": "Sales.vStoreWithAddresses.VIEW"
+        },
+        {
+            "source": "Person.BusinessEntityAddress.USER_TABLE",
+            "target": "HumanResources.vEmployee.VIEW"
+        },
+        {
+            "source": "Person.BusinessEntityAddress.USER_TABLE",
+            "target": "Purchasing.vVendorWithAddresses.VIEW"
+        },
+        {
+            "source": "Person.BusinessEntityAddress.USER_TABLE",
+            "target": "Sales.vIndividualCustomer.VIEW"
+        },
+        {
+            "source": "Person.BusinessEntityAddress.USER_TABLE",
+            "target": "Sales.vSalesPerson.VIEW"
+        },
+        {
+            "source": "Person.BusinessEntityAddress.USER_TABLE",
+            "target": "Sales.vStoreWithAddresses.VIEW"
+        },
+        {
+            "source": "Person.BusinessEntityContact.USER_TABLE",
+            "target": "dbo.ufnGetContactInformation.SQL_TABLE_VALUED_FUNCTION"
+        },
+        {
+            "source": "Person.BusinessEntityContact.USER_TABLE",
+            "target": "Purchasing.vVendorWithContacts.VIEW"
+        },
+        {
+            "source": "Person.BusinessEntityContact.USER_TABLE",
+            "target": "Sales.vStoreWithContacts.VIEW"
+        },
+        {
+            "source": "Person.ContactType.USER_TABLE",
+            "target": "dbo.ufnGetContactInformation.SQL_TABLE_VALUED_FUNCTION"
+        },
+        {
+            "source": "Person.ContactType.USER_TABLE",
+            "target": "Purchasing.vVendorWithContacts.VIEW"
+        },
+        {
+            "source": "Person.ContactType.USER_TABLE",
+            "target": "Sales.vStoreWithContacts.VIEW"
+        },
+        {
+            "source": "Person.CountryRegion.USER_TABLE",
+            "target": "HumanResources.vEmployee.VIEW"
+        },
+        {
+            "source": "Person.CountryRegion.USER_TABLE",
+            "target": "Person.vStateProvinceCountryRegion.VIEW"
+        },
+        {
+            "source": "Person.CountryRegion.USER_TABLE",
+            "target": "Purchasing.vVendorWithAddresses.VIEW"
+        },
+        {
+            "source": "Person.CountryRegion.USER_TABLE",
+            "target": "Sales.vIndividualCustomer.VIEW"
+        },
+        {
+            "source": "Person.CountryRegion.USER_TABLE",
+            "target": "Sales.vSalesPerson.VIEW"
+        },
+        {
+            "source": "Person.CountryRegion.USER_TABLE",
+            "target": "Sales.vStoreWithAddresses.VIEW"
+        },
+        {
+            "source": "Person.EmailAddress.USER_TABLE",
+            "target": "HumanResources.vEmployee.VIEW"
+        },
+        {
+            "source": "Person.EmailAddress.USER_TABLE",
+            "target": "Purchasing.vVendorWithContacts.VIEW"
+        },
+        {
+            "source": "Person.EmailAddress.USER_TABLE",
+            "target": "Sales.vIndividualCustomer.VIEW"
+        },
+        {
+            "source": "Person.EmailAddress.USER_TABLE",
+            "target": "Sales.vSalesPerson.VIEW"
+        },
+        {
+            "source": "Person.EmailAddress.USER_TABLE",
+            "target": "Sales.vStoreWithContacts.VIEW"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "dbo.ufnGetContactInformation.SQL_TABLE_VALUED_FUNCTION"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "dbo.uspGetEmployeeManagers.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "dbo.uspGetManagerEmployees.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "HumanResources.vEmployee.VIEW"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "HumanResources.vEmployeeDepartment.VIEW"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "HumanResources.vEmployeeDepartmentHistory.VIEW"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "Person.iuPerson.SQL_TRIGGER"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "Person.vAdditionalContactInfo.VIEW"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "Purchasing.vVendorWithContacts.VIEW"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "Sales.iduSalesOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "Sales.vIndividualCustomer.VIEW"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "Sales.vPersonDemographics.VIEW"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "Sales.vSalesPerson.VIEW"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "Sales.vSalesPersonSalesByFiscalYears.VIEW"
+        },
+        {
+            "source": "Person.Person.USER_TABLE",
+            "target": "Sales.vStoreWithContacts.VIEW"
+        },
+        {
+            "source": "Person.PersonPhone.USER_TABLE",
+            "target": "HumanResources.vEmployee.VIEW"
+        },
+        {
+            "source": "Person.PersonPhone.USER_TABLE",
+            "target": "Purchasing.vVendorWithContacts.VIEW"
+        },
+        {
+            "source": "Person.PersonPhone.USER_TABLE",
+            "target": "Sales.vIndividualCustomer.VIEW"
+        },
+        {
+            "source": "Person.PersonPhone.USER_TABLE",
+            "target": "Sales.vSalesPerson.VIEW"
+        },
+        {
+            "source": "Person.PersonPhone.USER_TABLE",
+            "target": "Sales.vStoreWithContacts.VIEW"
+        },
+        {
+            "source": "Person.PhoneNumberType.USER_TABLE",
+            "target": "HumanResources.vEmployee.VIEW"
+        },
+        {
+            "source": "Person.PhoneNumberType.USER_TABLE",
+            "target": "Purchasing.vVendorWithContacts.VIEW"
+        },
+        {
+            "source": "Person.PhoneNumberType.USER_TABLE",
+            "target": "Sales.vIndividualCustomer.VIEW"
+        },
+        {
+            "source": "Person.PhoneNumberType.USER_TABLE",
+            "target": "Sales.vSalesPerson.VIEW"
+        },
+        {
+            "source": "Person.PhoneNumberType.USER_TABLE",
+            "target": "Sales.vStoreWithContacts.VIEW"
+        },
+        {
+            "source": "Person.StateProvince.USER_TABLE",
+            "target": "HumanResources.vEmployee.VIEW"
+        },
+        {
+            "source": "Person.StateProvince.USER_TABLE",
+            "target": "Person.vStateProvinceCountryRegion.VIEW"
+        },
+        {
+            "source": "Person.StateProvince.USER_TABLE",
+            "target": "Purchasing.vVendorWithAddresses.VIEW"
+        },
+        {
+            "source": "Person.StateProvince.USER_TABLE",
+            "target": "Sales.vIndividualCustomer.VIEW"
+        },
+        {
+            "source": "Person.StateProvince.USER_TABLE",
+            "target": "Sales.vSalesPerson.VIEW"
+        },
+        {
+            "source": "Person.StateProvince.USER_TABLE",
+            "target": "Sales.vStoreWithAddresses.VIEW"
+        },
+        {
+            "source": "Production.BillOfMaterials.USER_TABLE",
+            "target": "dbo.uspGetBillOfMaterials.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "Production.BillOfMaterials.USER_TABLE",
+            "target": "dbo.uspGetWhereUsedProductID.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "Production.Product.USER_TABLE",
+            "target": "dbo.ufnGetProductDealerPrice.SQL_SCALAR_FUNCTION"
+        },
+        {
+            "source": "Production.Product.USER_TABLE",
+            "target": "dbo.ufnGetProductListPrice.SQL_SCALAR_FUNCTION"
+        },
+        {
+            "source": "Production.Product.USER_TABLE",
+            "target": "dbo.ufnGetProductStandardCost.SQL_SCALAR_FUNCTION"
+        },
+        {
+            "source": "Production.Product.USER_TABLE",
+            "target": "dbo.uspGetBillOfMaterials.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "Production.Product.USER_TABLE",
+            "target": "dbo.uspGetWhereUsedProductID.SQL_STORED_PROCEDURE"
+        },
+        {
+            "source": "Production.Product.USER_TABLE",
+            "target": "Production.vProductAndDescription.VIEW"
+        },
+        {
+            "source": "Production.ProductCostHistory.USER_TABLE",
+            "target": "dbo.ufnGetProductStandardCost.SQL_SCALAR_FUNCTION"
+        },
+        {
+            "source": "Production.ProductDescription.USER_TABLE",
+            "target": "Production.vProductAndDescription.VIEW"
+        },
+        {
+            "source": "Production.ProductInventory.USER_TABLE",
+            "target": "dbo.ufnGetStock.SQL_SCALAR_FUNCTION"
+        },
+        {
+            "source": "Production.ProductListPriceHistory.USER_TABLE",
+            "target": "dbo.ufnGetProductDealerPrice.SQL_SCALAR_FUNCTION"
+        },
+        {
+            "source": "Production.ProductListPriceHistory.USER_TABLE",
+            "target": "dbo.ufnGetProductListPrice.SQL_SCALAR_FUNCTION"
+        },
+        {
+            "source": "Production.ProductModel.USER_TABLE",
+            "target": "Production.vProductAndDescription.VIEW"
+        },
+        {
+            "source": "Production.ProductModel.USER_TABLE",
+            "target": "Production.vProductModelCatalogDescription.VIEW"
+        },
+        {
+            "source": "Production.ProductModel.USER_TABLE",
+            "target": "Production.vProductModelInstructions.VIEW"
+        },
+        {
+            "source": "Production.ProductModelProductDescriptionCulture.USER_TABLE",
+            "target": "Production.vProductAndDescription.VIEW"
+        },
+        {
+            "source": "Production.TransactionHistory.USER_TABLE",
+            "target": "Production.iWorkOrder.SQL_TRIGGER"
+        },
+        {
+            "source": "Production.TransactionHistory.USER_TABLE",
+            "target": "Production.uWorkOrder.SQL_TRIGGER"
+        },
+        {
+            "source": "Production.TransactionHistory.USER_TABLE",
+            "target": "Purchasing.iPurchaseOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "Production.TransactionHistory.USER_TABLE",
+            "target": "Purchasing.uPurchaseOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "Production.TransactionHistory.USER_TABLE",
+            "target": "Sales.iduSalesOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "Purchasing.PurchaseOrderDetail.USER_TABLE",
+            "target": "Purchasing.iPurchaseOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "Purchasing.PurchaseOrderDetail.USER_TABLE",
+            "target": "Purchasing.uPurchaseOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "Purchasing.PurchaseOrderHeader.USER_TABLE",
+            "target": "Purchasing.iPurchaseOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "Purchasing.PurchaseOrderHeader.USER_TABLE",
+            "target": "Purchasing.uPurchaseOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "Purchasing.PurchaseOrderHeader.USER_TABLE",
+            "target": "Purchasing.uPurchaseOrderHeader.SQL_TRIGGER"
+        },
+        {
+            "source": "Purchasing.Vendor.USER_TABLE",
+            "target": "dbo.ufnGetContactInformation.SQL_TABLE_VALUED_FUNCTION"
+        },
+        {
+            "source": "Purchasing.Vendor.USER_TABLE",
+            "target": "Purchasing.vVendorWithAddresses.VIEW"
+        },
+        {
+            "source": "Purchasing.Vendor.USER_TABLE",
+            "target": "Purchasing.vVendorWithContacts.VIEW"
+        },
+        {
+            "source": "Sales.SalesOrderDetail.USER_TABLE",
+            "target": "Sales.iduSalesOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "Sales.SalesOrderHeader.USER_TABLE",
+            "target": "Sales.iduSalesOrderDetail.SQL_TRIGGER"
+        },
+        {
+            "source": "Sales.SalesOrderHeader.USER_TABLE",
+            "target": "Sales.uSalesOrderHeader.SQL_TRIGGER"
+        },
+        {
+            "source": "Sales.SalesOrderHeader.USER_TABLE",
+            "target": "Sales.vSalesPersonSalesByFiscalYears.VIEW"
+        },
+        {
+            "source": "Sales.SalesPerson.USER_TABLE",
+            "target": "Sales.uSalesOrderHeader.SQL_TRIGGER"
+        },
+        {
+            "source": "Sales.SalesPerson.USER_TABLE",
+            "target": "Sales.vSalesPerson.VIEW"
+        },
+        {
+            "source": "Sales.SalesPerson.USER_TABLE",
+            "target": "Sales.vSalesPersonSalesByFiscalYears.VIEW"
+        },
+        {
+            "source": "Sales.SalesTerritory.USER_TABLE",
+            "target": "Sales.uSalesOrderHeader.SQL_TRIGGER"
+        },
+        {
+            "source": "Sales.SalesTerritory.USER_TABLE",
+            "target": "Sales.vSalesPerson.VIEW"
+        },
+        {
+            "source": "Sales.SalesTerritory.USER_TABLE",
+            "target": "Sales.vSalesPersonSalesByFiscalYears.VIEW"
+        },
+        {
+            "source": "Sales.Store.USER_TABLE",
+            "target": "dbo.ufnGetContactInformation.SQL_TABLE_VALUED_FUNCTION"
+        },
+        {
+            "source": "Sales.Store.USER_TABLE",
+            "target": "Sales.vStoreWithAddresses.VIEW"
+        },
+        {
+            "source": "Sales.Store.USER_TABLE",
+            "target": "Sales.vStoreWithContacts.VIEW"
+        },
+        {
+            "source": "Sales.Store.USER_TABLE",
+            "target": "Sales.vStoreWithDemographics.VIEW"
+        }
+    ]
+}
+
+createEnhancedDependencyGraph(graphData);
+    </script>
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Schema Graph Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .node { cursor: pointer; }
+        .link { fill: none; stroke: #999; stroke-opacity: 0.6; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <div class="flex space-x-4 mb-4">
+            <select id="cluster-filter" class="border rounded px-2 py-1">
+                <option value="all">All Clusters</option>
+            </select>
+        </div>
+        <div id="graph-container" class="w-full h-[800px] bg-white border rounded-lg shadow-lg"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            class AdvancedGraphVisualizer {
+                constructor(containerId) {
+                    // Node type configurations
+                    this.nodeTypeConfig = {
+                        'Base Table': { 
+                            color: '#3B82F6', 
+                            shape: this.createRectShape 
+                        },
+                        'Transaction': { 
+                            color: '#10B981', 
+                            shape: this.createRectShape 
+                        },
+                        'Transaction Detail': { 
+                            color: '#14B8A6', 
+                            shape: this.createRectShape 
+                        },
+                        'Profile': { 
+                            color: '#6366F1', 
+                            shape: this.createEllipseShape 
+                        },
+                        'User Data': { 
+                            color: '#8B5CF6', 
+                            shape: this.createEllipseShape 
+                        },
+                        'Product Data': { 
+                            color: '#EC4899', 
+                            shape: this.createDiamondShape 
+                        },
+                        'Analytics': { 
+                            color: '#F43F5E', 
+                            shape: this.createHexagonShape 
+                        },
+                        'Support': { 
+                            color: '#F59E0B', 
+                            shape: this.createPentagonShape 
+                        }
+                    };
+
+                    this.containerId = containerId;
+                    this.width = 1200;
+                    this.height = 800;
+                    this.margin = { top: 50, right: 50, bottom: 50, left: 50 };
+                }
+
+                // Custom shape creation methods
+                createRectShape(d) {
+                    return `M0,0 L${d.width},0 L${d.width},${d.height} L0,${d.height}Z`;
+                }
+
+                createEllipseShape(d) {
+                    return `M${d.width/2},0 A${d.width/2},${d.height/2} 0 1,0 ${d.width/2},${d.height}`;
+                }
+
+                createDiamondShape(d) {
+                    return `M${d.width/2},0 L${d.width},${d.height/2} L${d.width/2},${d.height} L0,${d.height/2}Z`;
+                }
+
+                createHexagonShape(d) {
+                    const points = [
+                        [d.width * 0.25, 0],
+                        [d.width * 0.75, 0],
+                        [d.width, d.height / 2],
+                        [d.width * 0.75, d.height],
+                        [d.width * 0.25, d.height],
+                        [0, d.height / 2]
+                    ];
+                    return points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]},${p[1]}`).join(' ') + 'Z';
+                }
+
+                createPentagonShape(d) {
+                    const points = [
+                        [d.width / 2, 0],
+                        [d.width, d.height * 0.4],
+                        [d.width * 0.8, d.height],
+                        [d.width * 0.2, d.height],
+                        [0, d.height * 0.4]
+                    ];
+                    return points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]},${p[1]}`).join(' ') + 'Z';
+                }
+
+                // Custom hierarchical layout algorithm
+                computeHierarchicalLayout(nodes, edges) {
+                    // Create level mapping
+                    const levelMap = new Map();
+                    const parentMap = new Map();
+
+                    // Find root nodes and compute levels
+                    const findLevels = (node) => {
+                        if (levelMap.has(node.id)) return levelMap.get(node.id);
+
+                        const parentEdges = edges.filter(e => e.target === node.id);
+                        if (parentEdges.length === 0) {
+                            levelMap.set(node.id, 0);
+                            return 0;
+                        }
+
+                        const parentLevels = parentEdges.map(e => {
+                            const parentNode = nodes.find(n => n.id === e.source);
+                            return findLevels(parentNode) + 1;
+                        });
+
+                        const maxLevel = Math.max(...parentLevels);
+                        levelMap.set(node.id, maxLevel);
+                        return maxLevel;
+                    };
+
+                    // Compute levels for all nodes
+                    nodes.forEach(findLevels);
+
+                    // Sort nodes within each level
+                    const nodesByLevel = new Map();
+                    nodes.forEach(node => {
+                        const level = levelMap.get(node.id);
+                        if (!nodesByLevel.has(level)) {
+                            nodesByLevel.set(level, []);
+                        }
+                        nodesByLevel.get(level).push(node);
+                    });
+
+                    // Assign x and y positions
+                    const layoutNodes = nodes.map(node => {
+                        const level = levelMap.get(node.id);
+                        return {
+                            ...node,
+                            x: level * 200 + this.margin.left,
+                            y: this.computeVerticalPosition(node, nodesByLevel.get(level)),
+                            level: level
+                        };
+                    });
+
+                    return { nodes: layoutNodes, levelMap };
+                }
+
+                // Compute vertical position within a level
+                computeVerticalPosition(node, levelNodes) {
+                    const sortedLevelNodes = levelNodes.sort((a, b) => 
+                        a.name.localeCompare(b.name)
+                    );
+                    const index = sortedLevelNodes.indexOf(node);
+                    return index * 100 + this.margin.top;
+                }
+
+                // Fetch graph data (simulated API call)
+                async fetchGraphData() {
+                    // Replace with actual API call in production
+                    return {
+                        nodes: [
+        
+        {"id": "users", "name": "Users", "label": "Base Table"},
+        {"id": "products", "name": "Products", "label": "Base Table"},
+        {"id": "categories", "name": "Categories", "label": "Base Table"},
+        
+        {"id": "orders", "name": "Orders", "label": "Transaction"},
+        {"id": "order_items", "name": "Order Items", "label": "Transaction Detail"},
+        {"id": "cart", "name": "Shopping Cart", "label": "Transaction"},
+        {"id": "cart_items", "name": "Cart Items", "label": "Transaction Detail"},
+        
+        {"id": "user_profiles", "name": "User Profiles", "label": "Profile"},
+        {"id": "addresses", "name": "Addresses", "label": "User Data"},
+        {"id": "payment_methods", "name": "Payment Methods", "label": "User Data"},
+        
+        {"id": "inventory", "name": "Inventory", "label": "Product Data"},
+        {"id": "price_history", "name": "Price History", "label": "Product Data"},
+        {"id": "product_images", "name": "Product Images", "label": "Product Data"},
+        
+        {"id": "order_summary", "name": "Order Summary", "label": "Analytics"},
+        {"id": "user_activity", "name": "User Activity Log", "label": "Analytics"},
+        {"id": "product_views", "name": "Product Views", "label": "Analytics"},
+        {"id": "recommendations", "name": "Product Recommendations", "label": "Analytics"},
+        
+        {"id": "support_tickets", "name": "Support Tickets", "label": "Support"},
+        {"id": "ticket_messages", "name": "Ticket Messages", "label": "Support"},
+        {"id": "ticket_history", "name": "Ticket History", "label": "Support"}
+    ],
+    "edges": [
+        {"source": "user_profiles", "target": "users"},
+        {"source": "addresses", "target": "users"},
+        {"source": "payment_methods", "target": "users"},
+        
+        {"source": "products", "target": "categories"},
+        {"source": "inventory", "target": "products"},
+        {"source": "price_history", "target": "products"},
+        {"source": "product_images", "target": "products"},
+        
+        {"source": "orders", "target": "users"},
+        {"source": "order_items", "target": "orders"},
+        {"source": "order_items", "target": "products"},
+        
+        {"source": "cart", "target": "users"},
+        {"source": "cart_items", "target": "cart"},
+        {"source": "cart_items", "target": "products"},
+        
+        {"source": "order_summary", "target": "orders"},
+        {"source": "user_activity", "target": "users"},
+        {"source": "product_views", "target": "products"},
+        {"source": "product_views", "target": "users"},
+        {"source": "recommendations", "target": "product_views"},
+        {"source": "recommendations", "target": "order_items"},
+        
+        {"source": "support_tickets", "target": "users"},
+        {"source": "ticket_messages", "target": "support_tickets"},
+        {"source": "ticket_history", "target": "support_tickets"}
+    ]
+                    };
+                }
+
+                // Main visualization method
+                async createGraph() {
+                    // Fetch graph data
+                    const { nodes, edges } = await this.fetchGraphData();
+
+                    // Compute hierarchical layout
+                    const { nodes: layoutNodes, levelMap } = this.computeHierarchicalLayout(nodes, edges);
+
+                    // Create SVG
+                    const svg = d3.select(this.containerId)
+                        .append('svg')
+                        .attr('width', this.width)
+                        .attr('height', this.height);
+
+                    // Create zoom behavior
+                    const zoom = d3.zoom()
+                        .scaleExtent([0.1, 10])
+                        .on('zoom', (event) => {
+                            svgGroup.attr('transform', event.transform);
+                        });
+
+                    svg.call(zoom);
+
+                    // Create main group for zoom
+                    const svgGroup = svg.append('g');
+
+                    // Draw edges
+                    const links = svgGroup.selectAll('.link')
+                        .data(edges)
+                        .enter().append('path')
+                        .attr('class', 'link')
+                        .attr('d', d => {
+                            const source = layoutNodes.find(n => n.id === d.source);
+                            const target = layoutNodes.find(n => n.id === d.target);
+                            return d3.line()([
+                                [source.x + 50, source.y + 25],
+                                [target.x + 50, target.y + 25]
+                            ]);
+                        });
+
+                    // Draw nodes
+                    const nodesElemnts = svgGroup.selectAll('.node')
+                        .data(layoutNodes)
+                        .enter().append('g')
+                        .attr('class', 'node')
+                        .attr('transform', d => `translate(${d.x},${d.y})`);
+
+                    // Add node shapes
+                    nodes.append('path')
+                        .attr('d', d => {
+                            const nodeType = d.label;
+                            const shapeConfig = this.nodeTypeConfig[nodeType] || this.nodeTypeConfig['Base Table'];
+                            return shapeConfig.shape({ width: 100, height: 50 });
+                        })
+                        .attr('fill', d => {
+                            const nodeType = d.label;
+                            const shapeConfig = this.nodeTypeConfig[nodeType] || this.nodeTypeConfig['Base Table'];
+                            return shapeConfig.color;
+                        })
+                        .attr('opacity', 0.7)
+                        .attr('stroke', '#333');
+
+                    // Add node labels
+                    nodes.append('text')
+                        .attr('x', 50)
+                        .attr('y', 25)
+                        .attr('text-anchor', 'middle')
+                        .attr('dy', '.35em')
+                        .attr('fill', 'white')
+                        .text(d => d.name);
+
+                    // Setup cluster filtering
+                    this.setupClusterFilter(nodesElemnts);
+                }
+
+                // Cluster filtering method
+                setupClusterFilter(nodesElemnts) {
+                    // Populate cluster filter dropdown
+                    const clusterSelect = d3.select('#cluster-filter');
+                    const clusters = [...new Set(nodes.data().map(n => n.label))];
+                    
+                    clusters.forEach(cluster => {
+                        clusterSelect.append('option')
+                            .attr('value', cluster)
+                            .text(cluster);
+                    });
+
+                    // Filter logic
+                    clusterSelect.on('change', function() {
+                        const selectedCluster = this.value;
+                        
+                        nodes.style('display', d => 
+                            selectedCluster === 'all' || d.label === selectedCluster 
+                            ? 'block' 
+                            : 'none'
+                        );
+                    });
+                }
+            }
+
+            // Initialize and create graph
+            const visualizer = new AdvancedGraphVisualizer('#graph-container');
+            visualizer.createGraph();
+        });
+    </script>
+</body>
+</html>

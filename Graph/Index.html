@@ -1,0 +1,236 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Dependency Graph</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .node circle {
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+        .node text {
+            font-size: 12px;
+        }
+        .link {
+            fill: none;
+            stroke: #999;
+            stroke-opacity: 0.6;
+            stroke-width: 1px;
+        }
+        .arrow {
+            fill: #999;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h1 class="text-2xl font-bold mb-4">Database Dependency Graph</h1>
+            <div class="flex space-x-4 mb-4">
+                <button id="zoomIn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Zoom In</button>
+                <button id="zoomOut" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Zoom Out</button>
+                <button id="resetZoom" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Reset</button>
+            </div>
+            <div id="graph" class="border rounded-lg" style="height: 800px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Graph visualization code
+        const width = document.getElementById('graph').clientWidth;
+        const height = document.getElementById('graph').clientHeight;
+        let currentZoom = 1;
+
+        // Create SVG
+        const svg = d3.select('#graph')
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height);
+
+        // Add zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on('zoom', (event) => {
+                container.attr('transform', event.transform);
+                currentZoom = event.transform.k;
+            });
+
+        svg.call(zoom);
+
+        // Create container for the graph
+        const container = svg.append('g');
+
+        // Add arrow marker definition
+        svg.append('defs').append('marker')
+            .attr('id', 'arrow')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 20)
+            .attr('refY', 0)
+            .attr('markerWidth', 8)
+            .attr('markerHeight', 8)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('class', 'arrow');
+
+        // Load and render the graph
+        fetch('http://127.0.0.1:5500/api/graph-data')
+            .then(response => response.json())
+            .then(data => {
+                // Create force simulation
+                const simulation = d3.forceSimulation(data.nodes)
+                    .force('link', d3.forceLink(data.edges)
+                        .id(d => d.id)
+                        .distance(100))
+                    .force('charge', d3.forceManyBody().strength(-1000))
+                    .force('x', d3.forceX(width / 2))
+                    .force('y', d3.forceY(d => height * (d.level / 4)));
+
+                // Draw links
+                const links = container.append('g')
+                    .selectAll('line')
+                    .data(data.edges)
+                    .join('line')
+                    .attr('class', 'link')
+                    .attr('marker-end', 'url(#arrow)');
+
+                // Draw nodes
+                const nodes = container.append('g')
+                    .selectAll('.node')
+                    .data(data.nodes)
+                    .join('g')
+                    .attr('class', 'node')
+                    .call(d3.drag()
+                        .on('start', dragstarted)
+                        .on('drag', dragged)
+                        .on('end', dragended));
+
+                // Add circles to nodes
+                nodes.append('circle')
+                    .attr('r', 10)
+                    .attr('fill', d => {
+                        const colors = ['#60A5FA', '#34D399', '#F87171'];
+                        return colors[d.level - 1] || '#9CA3AF';
+                    });
+
+                // Add labels to nodes
+                nodes.append('text')
+                    .attr('dx', 15)
+                    .attr('dy', 5)
+                    .text(d => d.name);
+
+                // Update positions on each tick
+                simulation.on('tick', () => {
+                    links
+                        .attr('x1', d => d.source.x)
+                        .attr('y1', d => d.source.y)
+                        .attr('x2', d => d.target.x)
+                        .attr('y2', d => d.target.y);
+
+                    nodes
+                        .attr('transform', d => `translate(${d.x},${d.y})`);
+                });
+
+                // Drag functions
+                function dragstarted(event) {
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    event.subject.fx = event.subject.x;
+                    event.subject.fy = event.subject.y;
+                }
+
+                function dragged(event) {
+                    event.subject.fx = event.x;
+                    event.subject.fy = event.y;
+                }
+
+                function dragended(event) {
+                    if (!event.active) simulation.alphaTarget(0);
+                    event.subject.fx = null;
+                    event.subject.fy = null;
+                }
+
+                // Center the graph initially
+                const initialTransform = d3.zoomIdentity
+                    .translate(width/2, height/2)
+                    .scale(0.8);
+                svg.call(zoom.transform, initialTransform);
+            });
+
+        // Zoom controls
+        document.getElementById('zoomIn').onclick = () => {
+            svg.transition().call(zoom.scaleBy, 1.5);
+        };
+
+        document.getElementById('zoomOut').onclick = () => {
+            svg.transition().call(zoom.scaleBy, 0.75);
+        };
+
+        document.getElementById('resetZoom').onclick = () => {
+            svg.transition().call(zoom.transform, d3.zoomIdentity
+                .translate(width/2, height/2)
+                .scale(0.8));
+        };
+    </script>
+</body>
+</html> -->
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navbar Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-around;
+            background-color: #333;
+            padding: 10px;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            transition: background-color 0.3s;
+        }
+        .navbar a:hover {
+            background-color: #575757;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="test.html">Test</a>
+        <a href="test8.html">Test 1</a>
+        <a href="test6.html">Test 2</a>
+        <a href="test5.html">Test 3</a>
+        <a href="test4.html">Test 4</a>
+        <a href="final.html">Final 1</a>
+        <a href="final2.html">Final 2</a>
+        <a href="final3.html">Final 3</a>
+        <a href="final4.html">Final 4</a>
+        <a href="final5.html">Final 5</a>
+        <a href="testbest.html">test8</a>
+        <a href="Testbetter4.html">test8</a>
+        <a href="Test3.html">test8</a>
+        <a href="Testbetter4.html">test8</a>
+        <a href="Hybrid.html">test8</a>
+
+    </nav>
+    <h1>Welcome to the Navbar Example</h1>
+</body>
+</html>

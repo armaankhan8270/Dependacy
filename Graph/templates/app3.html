@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Database Relationship Graph Visualizer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        #graph-container {
+            width: 100%;
+            height: 100vh;
+            background-color: white;
+            position: relative;
+        }
+        .node {
+            stroke: #fff;
+            stroke-width: 1.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .node:hover {
+            stroke: #000;
+            stroke-width: 3px;
+        }
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            pointer-events: none;
+            max-width: 250px;
+            z-index: 100;
+        }
+        .sidebar {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 250px;
+            background: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="graph-container">
+        <div id="graph"></div>
+        <div class="sidebar" id="metrics-sidebar">
+            <h3>Graph Metrics</h3>
+            <div id="metrics-content"></div>
+        </div>
+        <div id="tooltip" class="tooltip" style="display:none;"></div>
+    </div>
+
+    <script>
+        // Main visualization function
+        async function visualizeDatabase() {
+            // Fetch database graph data
+            const response = await fetch('/api/database-graph');
+            const graphData = await response.json();
+            console.log(response)
+
+            // D3.js Visualization Setup
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            // Color scale for object types
+            const colorScale = d3.scaleOrdinal()
+                .domain(['BASE_TABLE', 'TRANSACTION', 'LOOKUP', 'DIMENSION', 'FACT', 'BRIDGE', 'TEMPORAL', 'AUDIT'])
+                .range(d3.schemeCategory10);
+
+            // Create force simulation
+            const simulation = d3.forceSimulation(graphData.objects)
+                .force('link', d3.forceLink(graphData.relationships).id(d => d.id))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide(40));
+
+            // SVG Container
+            const svg = d3.select('#graph')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            // Links
+            const links = svg.append('g')
+                .attr('class', 'links')
+                .selectAll('line')
+                .data(graphData.relationships)
+                .enter().append('line')
+                .attr('class', 'link')
+                .style('stroke-width', d => {
+                    // Vary link thickness based on relationship type
+                    switch(d.relationship_type) {
+                        case 'ONE_TO_ONE': return 1;
+                        case 'ONE_TO_MANY': return 2;
+                        case 'MANY_TO_MANY': return 3;
+                        default: return 1.5;
+                    }
+                });
+
+            // Nodes
+            const nodes = svg.append('g')
+                .attr('class', 'nodes')
+                .selectAll('circle')
+                .data(graphData.objects)
+                .enter().append('circle')
+                .attr('class', 'node')
+                .attr('r', 15)
+                .attr('fill', d => colorScale(d.object_type))
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+
+            // Tooltip interactions
+            nodes.on('mouseover', function(event, d) {
+                const tooltip = d3.select('#tooltip');
+                tooltip.html(`
+                    <strong>${d.name}</strong><br>
+                    Type: ${d.object_type}<br>
+                    Schema: ${d.schema}<br>
+                    Tags: ${(d.tags || []).join(', ')}
+                `);
+                tooltip.style('display', 'block')
+                    .style('left', `${event.pageX + 10}px`)
+                    .style('top', `${event.pageY + 10}px`);
+            }).on('mouseout', () => {
+                d3.select('#tooltip').style('display', 'none');
+            });
+
+            // Update metrics sidebar
+            function updateMetricsSidebar() {
+                const metricsContent = d3.select('#metrics-content');
+                metricsContent.html(`
+                    <p>Graph Density: ${graphData.metrics.graph_properties.density.toFixed(4)}</p>
+                    <p>Graph Diameter: ${graphData.metrics.graph_properties.diameter}</p>
+                    <p>Transitivity: ${graphData.metrics.graph_properties.transitivity.toFixed(4)}</p>
+                    <h4>Top Centrality Nodes</h4>
+                    <ul>
+                        ${Object.entries(graphData.metrics.centrality.degree)
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 5)
+                            .map(([node, value]) => `<li>${node}: ${value.toFixed(4)}</li>`)
+                            .join('')}
+                    </ul>
+                `);
+            }
+            updateMetricsSidebar();
+
+            // Simulation tick function
+            simulation.on('tick', () => {
+                links
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                nodes
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+            });
+
+            // Drag event handlers
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+
+            // Responsive resize
+            window.addEventListener('resize', () => {
+                svg.attr('width', window.innerWidth)
+                   .attr('height', window.innerHeight);
+                simulation.force('center', d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2))
+                    .restart();
+            });
+        }
+
+        // Initialize visualization on page load
+        visualizeDatabase();
+    </script>
+</body>
+</html>

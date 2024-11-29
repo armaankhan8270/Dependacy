@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Schema Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/vis-network@9.0.0/dist/vis-network.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tailwindcss@3.0.24/dist/tailwind.min.js"></script>
+    <style>
+        #network {
+            width: 100%;
+            height: 600px;
+            border: 1px solid lightgray;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-4">
+        <h1 class="text-4xl font-bold mb-6 text-center">Database Schema Visualization</h1>
+        <div id="network"></div>
+    </div>
+
+    <script>
+        fetch('/api/graph-data')
+            .then(response => response.json())
+            .then(data => {
+                const nodes = new vis.DataSet(data.nodes.map(node => ({
+                    id: node.id,
+                    label: node.name,
+                    level: node.level,
+                    x: node.position[0] * 100,
+                    y: node.position[1] * 100,
+                    group: node.label
+                })));
+
+                const edges = new vis.DataSet(data.edges.map(edge => ({
+                    from: edge.source,
+                    to: edge.target
+                })));
+
+                const container = document.getElementById('network');
+                const dataVis = { nodes: nodes, edges: edges };
+                const options = {
+                    layout: {
+                        hierarchical: {
+                            sortMethod: "directed"
+                        }
+                    },
+                    groups: {
+                        "Base Table": { color: { background: "#ff5733" } },
+                        "Transaction": { color: { background: "#33ff57" } },
+                        "Transaction Detail": { color: { background: "#3357ff" } },
+                        "Profile": { color: { background: "#f3c744" } },
+                        "User Data": { color: { background: "#f1b1e8" } },
+                        "Analytics": { color: { background: "#61d3d3" } },
+                        "Support": { color: { background: "#d35a2f" } },
+                        "Product Data": { color: { background: "#47c8b8" } }
+                    },
+                    physics: false
+                };
+
+                const network = new vis.Network(container, dataVis, options);
+            });
+    </script>
+</body>
+</html>

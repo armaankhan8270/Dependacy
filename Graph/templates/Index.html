@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Database Dependency Graph</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .node circle {
+            stroke: #fff;
+            stroke-width: 2px;
+        }
+        .node text {
+            font-size: 12px;
+            font-weight: 500;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .link {
+            fill: none;
+            stroke: #999;
+            stroke-opacity: 0.3;
+            stroke-width: 1.5px;
+            transition: all 0.3s;
+        }
+        .link.highlighted {
+            stroke-opacity: 0.8;
+            stroke-width: 2px;
+            stroke: #4f46e5;
+        }
+        .arrow {
+            fill: #999;
+        }
+        .node-group {
+            opacity: 1;
+            transition: all 0.3s;
+        }
+        .node-group.dimmed {
+            opacity: 0.2;
+        }
+        .level-group {
+            stroke: #e5e7eb;
+            stroke-width: 1;
+            fill: #f9fafb;
+            fill-opacity: 0.5;
+        }
+        .level-label {
+            font-size: 14px;
+            font-weight: 600;
+            fill: #6b7280;
+        }
+        .node-card {
+            fill: white;
+            stroke: #e5e7eb;
+            rx: 6;
+            ry: 6;
+            transition: all 0.3s;
+        }
+        .node-card:hover {
+            stroke: #4f46e5;
+            stroke-width: 2;
+        }
+        .node-type-indicator {
+            font-size: 10px;
+            fill: #6b7280;
+        }
+        .layer-separator {
+            stroke: #e5e7eb;
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+        }
+        .node-shape-table {
+    fill: #4f46e5;
+    d: path('M-6,-6 L6,-6 L6,6 L-6,6 Z');  
+}
+.node-shape-view {
+    fill: #06b6d4;
+    d: path('M0,-8 L7,4 L-7,4 Z');  
+}
+.node-shape-trigger {
+    fill: #10b981;
+    d: path('M0,-7 L7,0 L0,7 L-7,0 Z');  
+}
+.node-shape-procedure {
+    fill: #8b5cf6;
+    d: path('M-7,0 A7,7 0 1,0 7,0 A7,7 0 1,0 -7,0');  
+}
+.selected-node {
+    stroke: #4f46e5;
+    stroke-width: 3px;
+}
+.dependency-panel {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: none;
+}
+
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto p-4">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Database Dependency Graph</h1>
+                    <p class="text-sm text-gray-600 mt-1">Right side shows independent objects, dependencies flow right to left</p>
+                </div>
+                `<div id="dependencyPanel" class="dependency-panel">
+                  <div class="flex justify-between items-center mb-4">
+                      <h3 class="text-lg font-semibold" id="selectedNodeName"></h3>
+                      <button class="text-gray-500 hover:text-gray-700" onclick="closeDependencyPanel()">×</button>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                      <div>
+                          <h4 class="text-sm font-medium text-gray-600 mb-2">Depends On</h4>
+                          <ul id="dependsOnList" class="text-sm"></ul>
+                      </div>
+                      <div>
+                          <h4 class="text-sm font-medium text-gray-600 mb-2">Required By</h4>
+                          <ul id="requiredByList" class="text-sm"></ul>
+                      </div>
+                  </div>
+              </div>`
+              
+                <div class="flex space-x-4">
+                  <div class="fixed bottom-4 right-4 flex space-x-2">
+                    <button class="bg-white p-2 rounded-full shadow hover:shadow-lg transition-shadow">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                    <button class="bg-white p-2 rounded-full shadow hover:shadow-lg transition-shadow">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
+                    <button class="bg-white p-2 rounded-full shadow hover:shadow-lg transition-shadow">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                        </svg>
+                    </button>
+                </div>`
+                    <button id="zoomFit" class="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 transition">
+                        <span class="text-sm">Fit View</span>
+                    </button>
+                    <button id="zoomIn" class="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 transition">
+                        <span class="text-sm">Zoom In</span>
+                    </button>
+                    <button id="zoomOut" class="bg-indigo-500 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 transition">
+                        <span class="text-sm">Zoom Out</span>
+                    </button>
+                </div>
+            </div>
+            <div id="graph" class="border rounded-xl bg-gray-50" style="height: 800px;"></div>
+            <div class="mt-4 text-sm text-gray-600">
+                <p>Hover over nodes to highlight dependencies. Drag nodes to adjust positions within their layer.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const width = document.getElementById('graph').clientWidth;
+        const height = document.getElementById('graph').clientHeight;
+        const LAYER_SPACING = width / 3;
+        const NODE_SPACING = 200;
+
+        const svg = d3.select('#graph')
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height);
+
+        // Add zoom behavior
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on('zoom', (event) => {
+                container.attr('transform', event.transform);
+            });
+
+        svg.call(zoom);
+
+        // Create containers
+        const container = svg.append('g');
+        const layerContainer = container.append('g');
+        const linkContainer = container.append('g');
+        const nodeContainer = container.append('g');
+
+        function highlightNode(node) {
+    resetHighlight();
+    nodes.classed('selected-node', d => d.id === node.id);
+    highlightConnections(null, node);
+}
+
+// Update the node click handler
+
+
+// Add global click handler to close panel when clicking outside
+svg.on('click', () => {
+    closeDependencyPanel();
+});
+
+        function showDependencyPanel(node) {
+    const panel = document.getElementById('dependencyPanel');
+    const nameEl = document.getElementById('selectedNodeName');
+    const dependsOnList = document.getElementById('dependsOnList');
+    const requiredByList = document.getElementById('requiredByList');
+
+    // Clear previous lists
+    dependsOnList.innerHTML = '';
+    requiredByList.innerHTML = '';
+
+    // Find dependencies
+    const dependsOn = data.edges
+        .filter(e => e.target.id === node.id)
+        .map(e => e.source);
+    const requiredBy = data.edges
+        .filter(e => e.source.id === node.id)
+        .map(e => e.target);
+
+    // Populate lists
+    dependsOn.forEach(dep => {
+        const li = document.createElement('li');
+        li.textContent = dep.name;
+        li.className = 'py-1 px-2 hover:bg-gray-100 rounded cursor-pointer';
+        li.onclick = () => highlightNode(dep);
+        dependsOnList.appendChild(li);
+    });
+
+    requiredBy.forEach(dep => {
+        const li = document.createElement('li');
+        li.textContent = dep.name;
+        li.className = 'py-1 px-2 hover:bg-gray-100 rounded cursor-pointer';
+        li.onclick = () => highlightNode(dep);
+        requiredByList.appendChild(li);
+    });
+
+    nameEl.textContent = node.name;
+    panel.style.display = 'block';
+}
+
+function closeDependencyPanel() {
+    document.getElementById('dependencyPanel').style.display = 'none';
+    resetHighlight();
+}
+
+
+        // Add arrow marker
+        svg.append('defs').append('marker')
+            .attr('id', 'arrow')
+            .attr('viewBox', '0 -5 10 10')
+            .attr('refX', 32)
+            .attr('refY', 0)
+            .attr('markerWidth', 8)
+            .attr('markerHeight', 8)
+            .attr('orient', 'auto')
+            .append('path')
+            .attr('d', 'M0,-5L10,0L0,5')
+            .attr('class', 'arrow');
+
+        // Load and process data
+        fetch('/api/graph-data')
+            .then(response => response.json())
+            .then(data => {
+                // Reverse the levels (so independent nodes are on right)
+                const maxLevel = d3.max(data.nodes, d => d.level);
+                data.nodes.forEach(node => {
+                    node.level = maxLevel - node.level;
+                });
+
+                // Create force simulation
+                const simulation = d3.forceSimulation(data.nodes)
+    .force('link', d3.forceLink(data.edges)
+        .id(d => d.id)
+        .distance(NODE_SPACING))
+    .force('x', d3.forceX(d => (maxLevel - d.level) * LAYER_SPACING).strength(1)) // Increased strength
+    .force('y', d3.forceY(d => {
+        // Calculate vertical position based on index within same level
+        const sameLayerNodes = data.nodes.filter(n => n.level === d.level);
+        const index = sameLayerNodes.indexOf(d);
+        const totalInLayer = sameLayerNodes.length;
+        return height * (0.2 + (0.6 * index / Math.max(totalInLayer - 1, 1)));
+    }).strength(1))
+    .force('collision', d3.forceCollide().radius(70));
+
+                // Create layer backgrounds
+                const layers = Array.from({length: maxLevel + 1}, (_, i) => i);
+                
+                layerContainer.selectAll('.layer-group')
+                    .data(layers)
+                    .join('rect')
+                    .attr('class', 'level-group')
+                    .attr('x', d => d * LAYER_SPACING - LAYER_SPACING/2)
+                    .attr('y', 50)
+                    .attr('width', LAYER_SPACING)
+                    .attr('height', height - 100);
+
+                // Add layer separators
+                layerContainer.selectAll('.layer-separator')
+                    .data(layers.slice(0, -1))
+                    .join('line')
+                    .attr('class', 'layer-separator')
+                    .attr('x1', d => (d + 1) * LAYER_SPACING)
+                    .attr('y1', 50)
+                    .attr('x2', d => (d + 1) * LAYER_SPACING)
+                    .attr('y2', height - 50);
+
+                // Create links with curved paths
+                const links = linkContainer
+                    .selectAll('.link')
+                    .data(data.edges)
+                    .join('path')
+                    .attr('class', 'link')
+                    .attr('marker-end', 'url(#arrow)');
+
+                // Create nodes
+                const nodes = nodeContainer
+                    .selectAll('.node-group')
+                    .data(data.nodes)
+                    .join('g')
+                    .attr('class', 'node-group')
+                    .call(d3.drag()
+                        .on('start', dragstarted)
+                        .on('drag', dragged)
+                        .on('end', dragended));
+
+                // Add node cards
+                nodes.append('rect')
+                    .attr('class', 'node-card')
+                    .attr('x', -60)
+                    .attr('y', -30)
+                    .attr('width', 120)
+                    .attr('height', 60);
+
+                // Add node circles
+                nodes.append('circle')
+                    .attr('r', 6)
+                    .attr('fill', d => {
+                        const colors = {
+                            'Base Table': '#4f46e5',
+                            'Transaction': '#06b6d4',
+                            'Analytics': '#10b981',
+                            'Support': '#8b5cf6',
+                            'User Data': '#f59e0b',
+                            'Product Data': '#ec4899'
+                        };
+                        return colors[d.label] || '#6b7280';
+                    });
+
+                // Add node labels
+                nodes.append('text')
+                    .attr('dy', -5)
+                    .attr('text-anchor', 'middle')
+                    .text(d => d.name)
+                    .call(wrap, 110);
+
+                // Add node type indicators
+                nodes.append('text')
+                    .attr('class', 'node-type-indicator')
+                    .attr('dy', 20)
+                    .attr('text-anchor', 'middle')
+                    .text(d => d.label);
+                    nodes.on('click', (event, d) => {
+    showDependencyPanel(d);
+    event.stopPropagation();
+});
+                // Interaction handlers
+                nodes
+                    .on('mouseover', highlightConnections)
+                    .on('mouseout', resetHighlight);
+
+                function highlightConnections(event, d) {
+                    nodes.classed('dimmed', true);
+                    links.classed('highlighted', false).classed('dimmed', true);
+
+                    const connectedNodes = new Set();
+                    connectedNodes.add(d.id);
+                    
+                    // Highlight both incoming and outgoing connections
+                    links.each(function(l) {
+                        if (l.source.id === d.id || l.target.id === d.id) {
+                            connectedNodes.add(l.source.id);
+                            connectedNodes.add(l.target.id);
+                            d3.select(this)
+                                .classed('highlighted', true)
+                                .classed('dimmed', false)
+                                .raise();
+                        }
+                    });
+
+                    nodes.classed('dimmed', n => !connectedNodes.has(n.id));
+                    d3.select(this).raise();
+                }
+
+                function resetHighlight() {
+                    nodes.classed('dimmed', false);
+                    links.classed('highlighted', false).classed('dimmed', false);
+                }
+
+                // Update positions on simulation tick
+                simulation.on('tick', () => {
+                    links.attr('d', d => {
+                        const sourceX = d.source.x;
+                        const sourceY = d.source.y;
+                        const targetX = d.target.x;
+                        const targetY = d.target.y;
+                        
+                        const dx = targetX - sourceX;
+                        const dy = targetY - sourceY;
+                        const dr = Math.sqrt(dx * dx + dy * dy);
+                        
+                        return `M${sourceX},${sourceY}A${dr},${dr} 0 0,1 ${targetX},${targetY}`;
+                    });
+
+                    nodes.attr('transform', d => `translate(${d.x},${d.y})`);
+                });
+
+                // Drag handlers
+                function dragstarted(event) {
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    event.subject.fx = event.subject.x;
+                    event.subject.fy = event.subject.y;
+                }
+
+                function dragged(event) {
+                    // Constrain x position to layer
+                    const layerX = (maxLevel - event.subject.level) * LAYER_SPACING;
+                    const minX = layerX - LAYER_SPACING/2;
+                    const maxX = layerX + LAYER_SPACING/2;
+                    event.subject.fx = Math.max(minX, Math.min(maxX, event.x));
+                    event.subject.fy = event.y;
+                }
+
+                function dragended(event) {
+                    if (!event.active) simulation.alphaTarget(0);
+                    event.subject.fx = null;
+                    event.subject.fy = null;
+                }
+
+                // Text wrapping function
+                function wrap(text, width) {
+                    text.each(function() {
+                        const text = d3.select(this);
+                        const words = text.text().split(/\s+/);
+                        const lines = [];
+                        let line = [];
+                        
+                        words.forEach(word => {
+                            line.push(word);
+                            if (line.join(' ').length > width/8) {
+                                lines.push(line);
+                                line = [];
+                            }
+                        });
+                        if (line.length) lines.push(line);
+
+                        text.text(null);
+                        lines.forEach((line, i) => {
+                            text.append('tspan')
+                                .attr('x', 0)
+                                .attr('dy', i ? '1.2em' : '-0.6em')
+                                .text(line.join(' '));
+                        });
+                    });
+                }
+
+                // Initial view positioning
+                const initialTransform = d3.zoomIdentity
+                    .translate(width/2, height/2)
+                    .scale(0.8);
+                svg.call(zoom.transform, initialTransform);
+
+                // Zoom controls
+                document.getElementById('zoomIn').onclick = () => {
+                    svg.transition().call(zoom.scaleBy, 1.5);
+                };
+
+                document.getElementById('zoomOut').onclick = () => {
+                    svg.transition().call(zoom.scaleBy, 0.75);
+                };
+
+                document.getElementById('zoomFit').onclick = () => {
+                    svg.transition().call(zoom.transform, initialTransform);
+                };
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Dependency Graph - Sigma.js</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        #graph-container {
+            width: 100vw;
+            height: calc(100vh - 80px);
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+        }
+        #control-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(30, 30, 50, 0.7);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(15px);
+            z-index: 1000;
+        }
+        .control-button {
+            background-color: #4a4a6a;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            margin-right: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .control-button:hover {
+            background-color: #5a5a7a;
+        }
+        select {
+            background-color: #4a4a6a;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+    <!-- Include Graphology Library -->
+    <script src="https://cdn.jsdelivr.net/npm/graphology@0.21.0/dist/graphology.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sigma/build/sigma.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/graphology@0.21.0/dist/graphology.umd.min.js"></script>
+</head>
+<body>
+    <div id="control-panel">
+        <div>
+            <button id="reset-view" class="control-button">Reset View</button>
+            <button id="toggle-clusters" class="control-button">Toggle Clusters</button>
+        </div>
+        <div id="schema-filter">
+            <select id="schema-select">
+                <option value="">All Schemas</option>
+            </select>
+        </div>
+    </div>
+    <div id="graph-container"></div>
+
+    <script>
+        // Sample Data
+        const graphData = {
+            nodes: [
+                { id: '1', schema: 'dbo', name: 'ErrorLog', type: 'USER_TABLE', level: 0, inDegree: 0, outDegree: 1 },
+                { id: '2', schema: 'dbo', name: 'uspLogError', type: 'SQL_STORED_PROCEDURE', level: 1, inDegree: 1, outDegree: 2 },
+                { id: '3', schema: 'HumanResources', name: 'UpdateEmployeeHireInfo', type: 'SQL_STORED_PROCEDURE', level: 2, inDegree: 1, outDegree: 0 },
+                { id: '4', schema: 'HumanResources', name: 'UpdateEmployeeLogin', type: 'SQL_STORED_PROCEDURE', level: 2, inDegree: 1, outDegree: 0 },
+            ],
+            edges: [
+                { source: '1', target: '2' },
+                { source: '2', target: '3' },
+                { source: '2', target: '4' },
+            ],
+        };
+
+        // Initialize Graphology Graph
+        const graph = new graphology.Graph();
+
+        // Color Palette
+        const colorPalette = {
+            USER_TABLE: '#2196F3',
+            SQL_STORED_PROCEDURE: '#4CAF50',
+            VIEW: '#FF9800',
+            DEFAULT: '#9C27B0',
+        };
+
+        // Add Nodes
+        graphData.nodes.forEach(node => {
+            graph.addNode(node.id, {
+                label: node.name,
+                x: Math.random(),
+                y: Math.random(),
+                size: Math.min(5 + node.inDegree + node.outDegree, 15),
+                color: colorPalette[node.type] || colorPalette.DEFAULT,
+                schema: node.schema,
+                type: node.type,
+            });
+        });
+
+        // Add Edges
+        graphData.edges.forEach(edge => {
+            graph.addEdge(edge.source, edge.target, { color: '#999', size: 1 });
+        });
+
+        // Create Sigma.js Renderer
+        const container = document.getElementById('graph-container');
+        const renderer = new Sigma(graph, container);
+
+        // Populate Schema Filter
+        const schemaSelect = document.getElementById('schema-select');
+        const uniqueSchemas = [...new Set(graphData.nodes.map(node => node.schema))];
+        uniqueSchemas.forEach(schema => {
+            const option = document.createElement('option');
+            option.value = schema;
+            option.text = schema;
+            schemaSelect.appendChild(option);
+        });
+
+        // Schema Filter
+        schemaSelect.addEventListener('change', (event) => {
+            const selectedSchema = event.target.value;
+            graph.forEachNode((nodeId, attributes) => {
+                const visible = selectedSchema === '' || attributes.schema === selectedSchema;
+                graph.setNodeAttribute(nodeId, 'hidden', !visible);
+            });
+        });
+
+        // Reset View Button
+        document.getElementById('reset-view').addEventListener('click', () => {
+            renderer.getCamera().animatedReset();
+        });
+
+        // Toggle Clusters Placeholder
+        document.getElementById('toggle-clusters').addEventListener('click', () => {
+            alert('Cluster toggling is a future enhancement!');
+        });
+
+        // Node Hover Effects
+        renderer.on('enterNode', ({ node }) => {
+            graph.setNodeAttribute(node, 'color', '#FFD700'); // Highlight node in gold
+        });
+
+        renderer.on('leaveNode', ({ node }) => {
+            graph.setNodeAttribute(node, 'color', colorPalette[graph.getNodeAttribute(node, 'type')] || colorPalette.DEFAULT);
+        });
+
+        // Zoom and Pan
+        renderer.getCamera().settings.minZoom = 0.1;
+        renderer.getCamera().settings.maxZoom = 10;
+    </script>
+</body>
+</html>
