@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Dependency Graph</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            overflow: hidden;
+        }
+        #graph-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        select, input {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <label for="schema-select">Schema:</label>
+        <select id="schema-select">
+            <option value="">All</option>
+        </select><br>
+        <label for="type-select">Type:</label>
+        <select id="type-select">
+            <option value="">All</option>
+        </select><br>
+        <label for="level-select">Level:</label>
+        <select id="level-select">
+            <option value="">All</option>
+        </select><br>
+        <label for="min-connections">Min Connections:</label>
+        <input type="number" id="min-connections" value="0" min="0"><br>
+        <label for="layout-select">Layout:</label>
+        <select id="layout-select">
+            <option value="schema">Schema</option>
+            <option value="level">Level</option>
+            <option value="type">Type</option>
+            <option value="connections">Connections</option>
+        </select><br>
+        <button id="reset-view">Reset View</button>
+    </div>
+    <div id="graph-container"></div>
+    
+    <script>
+        class AdvancedDependencyGraph {
+            constructor(containerId, data) {
+                this.container = d3.select(containerId);
+                this.data = data;
+
+                this.svg = this.container.append("svg")
+                    .attr("width", "100%")
+                    .attr("height", "100%")
+                    .call(d3.zoom().on("zoom", (event) => this.zoomed(event)))
+                    .append("g");
+
+                this.colorPalette = {
+                    'USER_TABLE': '#2196F3',
+                    'SQL_STORED_PROCEDURE': '#4CAF50',
+                    'VIEW': '#FF9800',
+                    'DEFAULT': '#9C27B0'
+                };
+
+                this.setupControls();
+                this.render();
+            }
+
+            setupControls() {
+                const uniqueSchemas = [...new Set(this.data.nodes.map(node => node.schema_name))];
+                const uniqueTypes = [...new Set(this.data.nodes.map(node => node.object_type))];
+                const uniqueLevels = [...new Set(this.data.nodes.map(node => node.level))];
+
+                this.populateSelect("#schema-select", uniqueSchemas);
+                this.populateSelect("#type-select", uniqueTypes);
+                this.populateSelect("#level-select", uniqueLevels);
+
+                d3.select("#schema-select").on("change", () => this.render());
+                d3.select("#type-select").on("change", () => this.render());
+                d3.select("#level-select").on("change", () => this.render());
+                d3.select("#min-connections").on("input", () => this.render());
+                d3.select("#layout-select").on("change", () => this.render());
+                d3.select("#reset-view").on("click", () => this.resetView());
+            }
+
+            populateSelect(selector, options) {
+                const select = d3.select(selector);
+                options.forEach(option => {
+                    select.append("option")
+                        .attr("value", option)
+                        .text(option);
+                });
+            }
+
+            zoomed(event) {
+                this.svg.attr("transform", event.transform);
+            }
+
+            resetView() {
+                this.svg.transition()
+                    .duration(750)
+                    .call(d3.zoom().transform, d3.zoomIdentity);
+            }
+
+            filterNodes() {
+                const selectedSchema = d3.select("#schema-select").property("value");
+                const selectedType = d3.select("#type-select").property("value");
+                const selectedLevel = d3.select("#level-select").property("value");
+                const minConnections = +d3.select("#min-connections").property("value");
+
+                return this.data.nodes.filter(node =>
+                    (selectedSchema === "" || node.schema_name === selectedSchema) &&
+                    (selectedType === "" || node.object_type === selectedType) &&
+                    (selectedLevel === "" || node.level.toString() === selectedLevel) &&
+                    (node.in_degree + node.out_degree >= minConnections)
+                );
+            }
+
+            render() {
+                const filteredNodes = this.filterNodes();
+                const visibleNodeIds = new Set(filteredNodes.map(n => n.id));
+                const visibleLinks = this.data.edges.filter(edge =>
+                    visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target)
+                );
+
+                this.svg.selectAll("*").remove();
+
+                // Render links
+                this.svg.append("g")
+                    .selectAll("line")
+                    .data(visibleLinks)
+                    .enter()
+                    .append("line")
+                    .attr("stroke", "#ccc")
+                    .attr("stroke-width", 2);
+
+                // Render nodes
+                const nodeGroup = this.svg.append("g")
+                    .selectAll("circle")
+                    .data(filteredNodes)
+                    .enter()
+                    .append("g");
+
+                nodeGroup.append("circle")
+                    .attr("r", 20)
+                    .attr("fill", d => this.colorPalette[d.object_type] || this.colorPalette['DEFAULT']);
+
+                nodeGroup.append("text")
+                    .text(d => d.object_name)
+                    .attr("text-anchor", "middle")
+                    .attr("dy", ".35em");
+            }
+        }
+
+        const graphData = {
+            "nodes": [
+                {
+                    "id": "node1",
+                    "schema_name": "schema1",
+                    "object_name": "Table1",
+                    "object_type": "USER_TABLE",
+                    "level": 1,
+                    "in_degree": 0,
+                    "out_degree": 1
+                },
+                {
+                    "id": "node2",
+                    "schema_name": "schema2",
+                    "object_name": "Procedure1",
+                    "object_type": "SQL_STORED_PROCEDURE",
+                    "level": 2,
+                    "in_degree": 1,
+                    "out_degree": 0
+                }
+            ],
+            "edges": [
+                { "source": "node1", "target": "node2" }
+            ]
+        };
+
+        new AdvancedDependencyGraph("#graph-container", graphData);
+    </script>
+</body>
+</html>
