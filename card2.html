@@ -1,0 +1,146 @@
+import streamlit as st
+
+def feature_card_app():
+    st.set_page_config(page_title="Feature Highlights", layout="centered")
+
+    # Custom CSS for feature cards
+    st.markdown("""
+    <style>
+    .feature-container {
+        max-width: 600px; /* Adjust width for compact design */
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 16px; /* More rounded corners */
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        overflow: hidden;
+    }
+
+    .feature-header {
+        background: linear-gradient(to right, #3B82F6, #6366F1);
+        color: white;
+        text-align: center;
+        padding: 15px;
+        font-size: 22px;
+        font-weight: bold;
+        border-radius: 16px 16px 0 0; /* Rounded top corners */
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px; /* Reduced gap for compact layout */
+        padding: 15px;
+    }
+
+    .feature-card {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 12px;
+        border-radius: 12px; /* More rounded corners for cards */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        background-color: white;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px); /* Lift effect on hover */
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1); /* More pronounced shadow */
+    }
+
+    .feature-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px; /* Smaller icon size */
+        height: 50px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .feature-icon svg {
+        width: 24px; /* Adjust icon size */
+        height: 24px;
+    }
+
+    .feature-content h4 {
+        margin: 0 0 6px 0;
+        font-size: 16px; /* Smaller title font */
+        color: #1F2937;
+    }
+
+    .feature-content p {
+        margin: 0;
+        color: #6B7280;
+        line-height: 1.4;
+        font-size: 14px; /* Smaller description font */
+    }
+
+    /* Colors for icons */
+    .icon-blue { background-color: #DBEAFE; color: #3B82F6; }
+    .icon-green { background-color: #DEF7EC; color: #10B981; }
+    .icon-yellow { background-color: #FEF3C7; color: #F59E0B; }
+    .icon-purple { background-color: #E5EDFF; color: #6366F1; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # SVG Icons (inline to avoid external dependencies)
+    icons = {
+        'customize': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3v6m6-6c0-1.657-1.343-3-3-3m0 6v3m-4-3h8" /></svg>',
+        'security': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 0H8m4 0h4m6 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+        'insights': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V8a2 2 0 00-2-2h-3l-2-2H9L7 6H4a2 2 0 00-2 2v5a2 2 0 002 2h16a2 2 0 002-2z" /></svg>',
+        'collaboration': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5 6a2 2 0 002-2v-8a2 2 0 00-2-2h-2a2 2 0 00-2 2v8a2 2 0 002 2h2zm-12 0a2 2 0 002-2v-8a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h2z" /></svg>'
+    }
+
+    # Feature data
+    features = [
+        {
+            'title': 'Customizable Settings',
+            'description': 'Easily adjust and personalize settings to suit your unique requirements. Enjoy a user-friendly interface that adapts to your needs.',
+            'icon': icons['customize'],
+            'icon_class': 'icon-blue'
+        },
+        {
+            'title': 'Advanced Security',
+            'description': 'Benefit from top-notch security measures that ensure your data remains safe and secure at all times.',
+            'icon': icons['security'],
+            'icon_class': 'icon-green'
+        },
+        {
+            'title': 'Real-Time Insights',
+            'description': 'Access up-to-date data and analytics with ease. Stay informed and make data-driven decisions.',
+            'icon': icons['insights'],
+            'icon_class': 'icon-yellow'
+        },
+        {
+            'title': 'Collaborative Tools',
+            'description': 'Empower your team with tools designed for collaboration and productivity.',
+            'icon': icons['collaboration'],
+            'icon_class': 'icon-purple'
+        }
+    ]
+
+    # Render feature card container
+    st.markdown('<div class="feature-container">', unsafe_allow_html=True)
+    st.markdown('<div class="feature-header">Feature Highlights</div>', unsafe_allow_html=True)
+    st.markdown('<div class="feature-grid">', unsafe_allow_html=True)
+
+    # Render features dynamically
+    for feature in features:
+        st.markdown(f'''
+        <div class="feature-card">
+            <div class="feature-icon {feature['icon_class']}">
+                {feature['icon']}
+            </div>
+            <div class="feature-content">
+                <h4>{feature['title']}</h4>
+                <p>{feature['description']}</p>
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+
+    st.markdown('</div></div>', unsafe_allow_html=True)
+
+# Run the app
+if __name__ == "__main__":
+    feature_card_app()
